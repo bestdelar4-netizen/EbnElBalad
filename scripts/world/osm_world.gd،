@@ -1,0 +1,117 @@
+
+extends Node3D
+
+signal map_data_received(roads_count: int, buildings_count: int)
+signal map_load_failed(message: String)
+
+const OVERPASS_URL := "https://overpass-api.de/api/interpreter"
+
+# منطقة اختبار صغيرة في القاهرة، وليست خريطة مصر كلها.
+const SOUTH := 30.03
+const WEST := 31.20
+const NORTH := 30.06
+const EAST := 31.25
+
+var http_request: HTTPRequest
+
+
+func _ready() -> void:
+	name = "OSMWorld"
+
+	http_request = HTTPRequest.new()
+	http_request.timeout = 60.0
+	add_child(http_request)
+
+	http_request.request_completed.connect(
+		_on_request_completed
+	)
+
+	load_map_data()
+
+
+func load_map_data() -> void:
+	var query := """
+	[out:json][timeout:40];
+	(
+	  way["highway"](%f,%f,%f,%f);
+	  way["building"](%f,%f,%f,%f);
+	);
+	out body;
+	""" % [
+		SOUTH, WEST, NORTH, EAST,
+		SOUTH, WEST, NORTH, EAST
+	]
+
+	var headers := PackedStringArray([
+		"Content-Type: application/x-www-form-urlencoded",
+		"User-Agent: EbnElBaladGodot/1.0"
+	])
+
+	var body := "data=" + query.uri_encode()
+
+	var error := http_request.request(
+		OVERPASS_URL,
+		headers,
+		HTTPClient.METHOD_POST,
+		body
+	)
+
+	if error != OK:
+		map_load_failed.emit(
+			"تعذر بدء الاتصال. رمز الخطأ: %d" % error
+		)
+		return
+
+	print("جاري طلب بيانات OpenStreetMap...")
+
+
+func _on_request_completed(
+	result: int,
+	response_code: int,
+	_headers: PackedStringArray,
+	body: PackedByteArray
+) -> void:
+	if result != HTTPRequest.RESULT_SUCCESS:
+		map_load_failed.emit("فشل الاتصال بالإنترنت أو انتهت المهلة.")
+		return
+
+	if response_code != 200:
+		map_load_failed.emit(
+			"الخادم أعاد رمز HTTP: %d" % response_code
+		)
+		return
+
+	var parsed: Variant = JSON.parse_string(
+		body.get_string_from_utf8()
+	)
+
+	if not parsed is Dictionary:
+		map_load_failed.emit("تعذر قراءة بيانات الخريطة.")
+		return
+
+	var elements: Array = parsed.get("elements", [])
+	var roads_count := 0
+	var buildings_count := 0
+
+	for element in elements:
+		if not element is Dictionary:
+			continue
+
+		var tags: Dictionary = element.get("tags", {})
+
+		if tags.has("highway"):
+			roads_count += 1
+
+		if tags.has("building"):
+			buildings_count += 1
+
+	print("نجح الاتصال بـ OpenStreetMap!")
+	print("عدد عناصر الطرق: ", roads_count)
+	print("عدد عناصر المباني: ", buildings_count)
+
+	map_data_received.emit(roads_count, buildings_count)
+
+
+func retry_loading() -> void:
+	if http_request.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+		load_map_data()
