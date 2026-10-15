@@ -6,7 +6,8 @@ func _ready() -> void:
     create_environment()
     create_street()
     create_player()
-    print("ابن البلد المصرية: العالم جاهز")
+    create_mobile_controls()
+    print("ابن البلد المصرية جاهزة للتجربة!")
 
 func create_environment() -> void:
     var sun := DirectionalLight3D.new()
@@ -30,7 +31,6 @@ func create_environment() -> void:
     add_child(world_environment)
 
 func create_street() -> void:
-    # أرض العالم
     make_box(
         "Ground",
         Vector3(60, 0.5, 60),
@@ -39,7 +39,6 @@ func create_street() -> void:
         true
     )
 
-    # الأسفلت
     make_box(
         "Road",
         Vector3(10, 0.08, 60),
@@ -48,7 +47,6 @@ func create_street() -> void:
         false
     )
 
-    # الأرصفة
     make_box(
         "LeftSidewalk",
         Vector3(2, 0.18, 60),
@@ -65,7 +63,6 @@ func create_street() -> void:
         true
     )
 
-    # خطوط منتصف الطريق
     for i in range(10):
         make_box(
             "RoadLine" + str(i),
@@ -75,7 +72,6 @@ func create_street() -> void:
             false
         )
 
-    # مباني الحارة المصرية
     for i in range(6):
         var z_position := -23.0 + float(i) * 9.0
         var left_height := 7.0 + float(i % 3) * 2.0
@@ -97,7 +93,6 @@ func create_street() -> void:
             true
         )
 
-        # واجهات ملونة للمحلات
         make_box(
             "LeftShopFront" + str(i),
             Vector3(0.12, 1.2, 2.4),
@@ -135,6 +130,74 @@ func create_player() -> void:
     player.position = Vector3(0, 0.1, 5)
     add_child(player)
 
+func create_mobile_controls() -> void:
+    var canvas := CanvasLayer.new()
+    canvas.name = "MobileControls"
+    add_child(canvas)
+
+    var root := Control.new()
+    root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    root.mouse_filter = Control.MOUSE_FILTER_PASS
+    canvas.add_child(root)
+
+    # أزرار الحركة في أسفل يسار الشاشة
+    make_touch_button(root, "↑", "ui_up", 100, -215, 170, -145)
+    make_touch_button(root, "↓", "ui_down", 100, -75, 170, -5)
+    make_touch_button(root, "←", "ui_left", 25, -145, 95, -75)
+    make_touch_button(root, "→", "ui_right", 175, -145, 245, -75)
+
+    # زر القفز أسفل يمين الشاشة
+    var jump_button := Button.new()
+    jump_button.text = "قفز"
+    jump_button.focus_mode = Control.FOCUS_NONE
+    jump_button.add_theme_font_size_override("font_size", 22)
+    jump_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+    jump_button.offset_left = -125
+    jump_button.offset_top = -115
+    jump_button.offset_right = -30
+    jump_button.offset_bottom = -30
+    root.add_child(jump_button)
+
+    jump_button.button_down.connect(
+        _press_action.bind("ui_accept")
+    )
+    jump_button.button_up.connect(
+        _release_action.bind("ui_accept")
+    )
+
+func make_touch_button(
+    root: Control,
+    label: String,
+    action_name: String,
+    left: float,
+    top: float,
+    right: float,
+    bottom: float
+) -> void:
+    var button := Button.new()
+    button.text = label
+    button.focus_mode = Control.FOCUS_NONE
+    button.add_theme_font_size_override("font_size", 28)
+    button.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+    button.offset_left = left
+    button.offset_top = top
+    button.offset_right = right
+    button.offset_bottom = bottom
+    root.add_child(button)
+
+    button.button_down.connect(
+        _press_action.bind(action_name)
+    )
+    button.button_up.connect(
+        _release_action.bind(action_name)
+    )
+
+func _press_action(action_name: String) -> void:
+    Input.action_press(action_name)
+
+func _release_action(action_name: String) -> void:
+    Input.action_release(action_name)
+
 func make_box(
     object_name: String,
     box_size: Vector3,
@@ -148,7 +211,6 @@ func make_box(
         var body := StaticBody3D.new()
         var collision := CollisionShape3D.new()
         var shape := BoxShape3D.new()
-
         shape.size = box_size
         collision.shape = shape
         body.add_child(collision)
@@ -166,6 +228,7 @@ func make_box(
 
     var material := StandardMaterial3D.new()
     material.albedo_color = box_color
+    material.roughness = 0.85
     material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
     mesh_instance.material_override = material
 
