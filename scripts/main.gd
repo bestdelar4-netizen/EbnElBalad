@@ -1,41 +1,13 @@
 
 extends Node3D
 
-const PLAYER_SCENE: PackedScene = preload("res://scenes/player.tscn")
-const JOYSTICK_SCRIPT: GDScript = preload("res://scripts/virtual_joystick.gd")
-const WORLD_MANAGER_SCRIPT: GDScript = preload("res://scripts/world/world_manager.gd")
+const PLAYER_SCENE = preload("res://scenes/player.tscn")
+const JOYSTICK_SCRIPT = preload("res://scripts/virtual_joystick.gd")
+const WORLD_MANAGER_SCRIPT = preload("res://scripts/world/world_manager.gd")
+const WORLD_EXTRAS_SCRIPT = preload("res://scripts/world/world_extras.gd")
 
-var player_reference: CharacterBody3D
+var player_reference: Node3D
 var world_manager: Node3D
-
-const ROAD_SPACING: float = 60.0
-const ROAD_LENGTH: float = 480.0
-const STREET_COUNT: int = 5
-
-var wall_colors: Array[Color] = [
-    Color(0.76, 0.65, 0.51),
-    Color(0.83, 0.77, 0.66),
-    Color(0.65, 0.43, 0.31),
-    Color(0.72, 0.70, 0.62),
-    Color(0.58, 0.35, 0.25),
-    Color(0.78, 0.57, 0.40),
-    Color(0.72, 0.68, 0.58),
-    Color(0.61, 0.57, 0.48)
-]
-
-var shop_colors: Array[Color] = [
-    Color(0.10, 0.36, 0.25),
-    Color(0.12, 0.30, 0.62),
-    Color(0.68, 0.19, 0.13),
-    Color(0.72, 0.43, 0.08),
-    Color(0.30, 0.25, 0.44)
-]
-
-var shop_names: Array[String] = [
-    "بقالة", "حلاق", "مخبز",
-    "ملابس", "موبايلات", "كشري",
-    "خضار", "مطعم", "قهوة"
-]
 
 
 func _ready() -> void:
@@ -44,50 +16,36 @@ func _ready() -> void:
     create_world()
     create_mobile_controls()
     create_player()
+    create_world_extras()
 
-    print("أهلاً بك في ابن البلد المصرية!")
-    print("تم إنشاء الحي المصري الأول.")
-
-
-# ==================================================
-# البيئة والسماء والإضاءة
-# ==================================================
 
 func create_environment() -> void:
     var sun := DirectionalLight3D.new()
     sun.name = "Sun"
-    sun.rotation_degrees = Vector3(-42, -30, 0)
+    sun.rotation_degrees = Vector3(-48.0, -30.0, 0.0)
     sun.light_energy = 1.2
     sun.shadow_enabled = true
     add_child(sun)
 
-    var world := WorldEnvironment.new()
+    var world_env := WorldEnvironment.new()
     var environment := Environment.new()
-
     environment.background_mode = Environment.BG_SKY
+    environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+    environment.ambient_light_energy = 0.7
+    environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 
     var sky := Sky.new()
     var sky_material := ProceduralSkyMaterial.new()
-    sky_material.sky_top_color = Color(0.15, 0.39, 0.68)
-    sky_material.sky_horizon_color = Color(0.65, 0.76, 0.86)
-    sky_material.ground_bottom_color = Color(0.19, 0.17, 0.14)
-    sky_material.ground_horizon_color = Color(0.57, 0.53, 0.44)
-
+    sky_material.sky_top_color = Color(0.12, 0.35, 0.68)
+    sky_material.sky_horizon_color = Color(0.65, 0.78, 0.9)
+    sky_material.ground_bottom_color = Color(0.22, 0.2, 0.16)
+    sky_material.ground_horizon_color = Color(0.55, 0.53, 0.45)
     sky.sky_material = sky_material
+
     environment.sky = sky
+    world_env.environment = environment
+    add_child(world_env)
 
-    environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-    environment.ambient_light_color = Color(0.78, 0.77, 0.71)
-    environment.ambient_light_energy = 0.8
-    environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-
-    world.environment = environment
-    add_child(world)
-
-
-# ==================================================
-# مدير العالم
-# ==================================================
 
 func create_world_manager() -> void:
     world_manager = Node3D.new()
@@ -96,717 +54,438 @@ func create_world_manager() -> void:
     add_child(world_manager)
 
 
-# ==================================================
-# إنشاء الحي المصري الواسع
-# ==================================================
-
 func create_world() -> void:
+    create_ground()
+    create_roads()
+    create_buildings()
+    create_park()
+    create_street_lights()
+
+
+func create_ground() -> void:
     make_box(
-        "WorldGround",
-        Vector3(340, 0.5, ROAD_LENGTH + 40.0),
-        Vector3(0, -0.30, 0),
-        Color(0.48, 0.42, 0.32),
+        "CityGround",
+        Vector3(0.0, -0.5, 0.0),
+        Vector3(340.0, 1.0, 520.0),
+        Color(0.65, 0.57, 0.4),
         true
     )
 
-    # شوارع طولية متوازية
-    for street_index in range(STREET_COUNT):
-        var road_x := (float(street_index) - 2.0) * ROAD_SPACING
-        create_long_street(road_x, street_index)
 
-    # شوارع عرضية تربط الشوارع الطولية
-    for cross_index in range(7):
-        var cross_z := -180.0 + float(cross_index) * 60.0
-        create_cross_street(cross_z, cross_index)
-
-    # المباني على جانبي الشوارع الطولية
-    for street_index in range(STREET_COUNT):
-        var road_x := (float(street_index) - 2.0) * ROAD_SPACING
-
-        for building_index in range(16):
-            var building_z := -210.0 + float(building_index) * 28.0
-
-            if is_near_cross_street(building_z):
-                continue
-
-            create_building(
-                road_x,
-                -1,
-                street_index * 100 + building_index,
-                building_z
-            )
-
-            create_building(
-                road_x,
-                1,
-                street_index * 100 + building_index + 35,
-                building_z
-            )
-
-    create_landmarks()
-
-
-func is_near_cross_street(z: float) -> bool:
-    for cross_index in range(7):
-        var cross_z := -180.0 + float(cross_index) * 60.0
-
-        if absf(z - cross_z) < 13.0:
-            return true
-
-    return false
-
-
-# ==================================================
-# الشوارع الطولية
-# ==================================================
-
-func create_long_street(road_x: float, street_index: int) -> void:
-    make_box(
-        "Road_%d" % street_index,
-        Vector3(12.0, 0.08, ROAD_LENGTH),
-        Vector3(road_x, 0.0, 0.0),
-        Color(0.13, 0.14, 0.14),
-        false
-    )
-
-    for side in [-1, 1]:
+func create_roads() -> void:
+    # الشوارع الرئيسية
+    for road_x in [-120.0, -60.0, 0.0, 60.0, 120.0]:
         make_box(
-            "Sidewalk_%d_%d" % [street_index, side],
-            Vector3(2.0, 0.20, ROAD_LENGTH),
-            Vector3(road_x + float(side) * 7.0, 0.10, 0.0),
-            Color(0.65, 0.60, 0.51),
+            "MainRoad",
+            Vector3(road_x, 0.02, 0.0),
+            Vector3(10.0, 0.12, 480.0),
+            Color(0.16, 0.16, 0.17),
             true
         )
 
+        # الأرصفة
+        for side in [-1.0, 1.0]:
+            make_box(
+                "Sidewalk",
+                Vector3(road_x + side * 7.0, 0.08, 0.0),
+                Vector3(3.5, 0.2, 480.0),
+                Color(0.62, 0.6, 0.54),
+                true
+            )
+
+        # خطوط الطريق
+        for z in range(-230, 231, 12):
+            make_box(
+                "RoadMarking",
+                Vector3(road_x, 0.095, float(z)),
+                Vector3(0.16, 0.02, 4.0),
+                Color(0.95, 0.88, 0.62),
+                false
+            )
+
+    # الشوارع العرضية
+    for road_z in range(-240, 241, 60):
         make_box(
-            "Curb_%d_%d" % [street_index, side],
-            Vector3(0.20, 0.25, ROAD_LENGTH),
-            Vector3(road_x + float(side) * 6.0, 0.12, 0.0),
-            Color(0.79, 0.74, 0.65),
+            "CrossRoad",
+            Vector3(0.0, 0.025, float(road_z)),
+            Vector3(300.0, 0.13, 9.0),
+            Color(0.17, 0.17, 0.18),
             true
         )
 
-    # علامات منتصف الطريق
-    for mark_index in range(48):
-        var mark_z := -230.0 + float(mark_index) * 9.5
 
-        make_box(
-            "RoadMark_%d_%d" % [street_index, mark_index],
-            Vector3(0.14, 0.025, 2.8),
-            Vector3(road_x, 0.055, mark_z),
-            Color(0.93, 0.86, 0.68),
-            false
-        )
+func create_buildings() -> void:
+    var rng := RandomNumberGenerator.new()
+    rng.seed = 13579
 
-    # أعمدة الإنارة
-    for lamp_index in range(12):
-        var lamp_z := -215.0 + float(lamp_index) * 39.0
+    for road_x in [-120.0, -60.0, 0.0, 60.0, 120.0]:
+        for side in [-1.0, 1.0]:
+            for z in range(-220, 221, 24):
+                var nearest_crossing := absf(
+                    float(z) - roundf(float(z) / 60.0) * 60.0
+                )
 
-        create_lamp(road_x - 7.7, lamp_z, 1)
-        create_lamp(road_x + 7.7, lamp_z, -1)
+                if nearest_crossing < 15.0:
+                    continue
 
+                var height := rng.randf_range(7.0, 19.0)
+                var width := rng.randf_range(7.0, 10.0)
+                var depth := rng.randf_range(8.0, 12.0)
 
-# ==================================================
-# الشوارع العرضية
-# ==================================================
+                var building_x := road_x + side * 15.0
+                var building_z := float(z) + rng.randf_range(-2.0, 2.0)
 
-func create_cross_street(z: float, index: int) -> void:
-    make_box(
-        "CrossRoad_%d" % index,
-        Vector3(340.0, 0.085, 12.0),
-        Vector3(0, 0.015, z),
-        Color(0.14, 0.15, 0.15),
-        false
-    )
+                create_building(
+                    Vector3(building_x, 0.0, building_z),
+                    Vector3(width, height, depth),
+                    rng
+                )
 
-    make_box(
-        "CrossSidewalkA_%d" % index,
-        Vector3(340.0, 0.18, 1.8),
-        Vector3(0, 0.09, z - 7.0),
-        Color(0.65, 0.60, 0.51),
-        true
-    )
-
-    make_box(
-        "CrossSidewalkB_%d" % index,
-        Vector3(340.0, 0.18, 1.8),
-        Vector3(0, 0.09, z + 7.0),
-        Color(0.65, 0.60, 0.51),
-        true
-    )
-
-    # خطوط عبور بسيطة عند التقاطعات
-    for mark_index in range(15):
-        var mark_x := -140.0 + float(mark_index) * 20.0
-
-        make_box(
-            "CrossMark_%d_%d" % [index, mark_index],
-            Vector3(1.5, 0.025, 0.18),
-            Vector3(mark_x, 0.065, z),
-            Color(0.84, 0.81, 0.72),
-            false
-        )
-
-
-# ==================================================
-# إنشاء المباني
-# ==================================================
 
 func create_building(
-    road_x: float,
-    side: int,
-    index: int,
-    z: float
+    pos: Vector3,
+    dimensions: Vector3,
+    rng: RandomNumberGenerator
 ) -> void:
-    var rng := RandomNumberGenerator.new()
-    rng.seed = abs(index * 7919 + int(road_x * 31.0) + 101)
+    var height := dimensions.y
+    var colors: Array[Color] = [
+        Color(0.76, 0.65, 0.5),
+        Color(0.83, 0.76, 0.63),
+        Color(0.68, 0.62, 0.53),
+        Color(0.78, 0.72, 0.64),
+        Color(0.61, 0.57, 0.49)
+    ]
 
-    var is_village := index % 4 == 1
-    var floors := rng.randi_range(3, 5)
+    var wall_color: Color = colors[rng.randi_range(0, colors.size() - 1)]
 
-    if is_village:
-        floors = rng.randi_range(1, 2)
-
-    var floor_height := 2.9
-    var building_height := float(floors) * floor_height
-    var center_x := road_x + float(side) * 11.0
-    var front_x := road_x + float(side) * 8.0
-    var facade := wall_colors[rng.randi_range(0, wall_colors.size() - 1)]
-
-    # جسم المبنى
     make_box(
-        "Building_%d" % index,
-        Vector3(6.0, building_height, 8.0),
-        Vector3(center_x, building_height / 2.0, z),
-        facade,
+        "Building",
+        pos + Vector3(0.0, height / 2.0, 0.0),
+        dimensions,
+        wall_color,
         true
     )
 
-    # السطح والحافة الخرسانية
+    # حافة سطح المبنى
     make_box(
-        "RoofEdge_%d" % index,
-        Vector3(6.1, 0.30, 8.1),
-        Vector3(center_x, building_height + 0.12, z),
-        Color(0.62, 0.57, 0.48),
-        false
+        "RoofEdge",
+        pos + Vector3(0.0, height + 0.15, 0.0),
+        Vector3(dimensions.x + 0.3, 0.3, dimensions.z + 0.3),
+        Color(0.48, 0.43, 0.36),
+        true
     )
 
-    # تفاصيل كل دور
-    for floor_index in range(floors):
-        var base_y := float(floor_index) * floor_height
-        var window_y := base_y + 1.65
+    # شبابيك على الواجهة الأمامية
+    var front_x := pos.x - signf(pos.x) * (dimensions.x / 2.0 + 0.04)
 
-        make_box(
-            "FloorBand_%d_%d" % [index, floor_index],
-            Vector3(0.13, 0.12, 8.05),
-            Vector3(front_x, base_y + 0.10, z),
-            Color(0.87, 0.80, 0.68),
-            false
-        )
-
+    for floor_index in range(1, int(height / 3.0)):
         for window_index in range(2):
-            var window_z := z + (float(window_index) - 0.5) * 3.0
+            var window_z := pos.z + (float(window_index) - 0.5) * 3.0
 
-            create_window(
-                front_x,
-                window_y,
-                window_z,
-                side,
-                index,
-                floor_index,
-                window_index
+            make_box(
+                "Window",
+                Vector3(
+                    front_x,
+                    float(floor_index) * 3.0,
+                    window_z
+                ),
+                Vector3(0.08, 1.25, 1.3),
+                Color(0.18, 0.35, 0.48),
+                false
             )
 
-            if (index + floor_index + window_index) % 2 == 0:
-                create_balcony(
-                    front_x,
-                    base_y,
-                    window_z,
-                    side,
-                    index
-                )
+            # إطار النافذة
+            make_box(
+                "WindowFrame",
+                Vector3(
+                    front_x - 0.05,
+                    float(floor_index) * 3.0,
+                    window_z
+                ),
+                Vector3(0.08, 1.4, 1.45),
+                Color(0.85, 0.79, 0.65),
+                false
+            )
 
-            if (index + floor_index + window_index) % 3 == 0:
-                create_air_conditioner(
-                    front_x,
-                    window_y,
-                    window_z,
-                    side
-                )
-
-    if is_village:
-        create_village_entrance(front_x, z, side)
-    else:
-        create_shop(front_x, z, side, index)
-
-    create_roof_details(center_x, building_height, z, index)
-
-
-# ==================================================
-# الشبابيك
-# ==================================================
-
-func create_window(
-    front_x: float,
-    y: float,
-    z: float,
-    side: int,
-    building_id: int,
-    floor_id: int,
-    window_id: int
-) -> void:
-    var outward := -float(side)
-
+    # باب أو محل في الطابق الأرضي
     make_box(
-        "WindowFrame_%d_%d_%d" % [building_id, floor_id, window_id],
-        Vector3(0.16, 1.35, 1.25),
-        Vector3(front_x, y, z),
-        Color(0.86, 0.79, 0.66),
-        false
-    )
-
-    make_box(
-        "WindowGlass",
-        Vector3(0.055, 1.12, 1.02),
-        Vector3(front_x + outward * 0.10, y, z),
-        Color(0.12, 0.25, 0.32),
-        false
-    )
-
-    make_box(
-        "WindowBarVertical",
-        Vector3(0.06, 1.10, 0.055),
-        Vector3(front_x + outward * 0.14, y, z),
-        Color(0.35, 0.37, 0.36),
-        false
-    )
-
-    make_box(
-        "WindowBarHorizontal",
-        Vector3(0.06, 0.055, 1.02),
-        Vector3(front_x + outward * 0.14, y, z),
-        Color(0.35, 0.37, 0.36),
-        false
-    )
-
-
-# ==================================================
-# البلكونات
-# ==================================================
-
-func create_balcony(
-    front_x: float,
-    floor_y: float,
-    z: float,
-    side: int,
-    building_id: int
-) -> void:
-    var outward := -float(side)
-    var bx := front_x + outward * 0.42
-
-    make_box(
-        "BalconyFloor",
-        Vector3(0.85, 0.15, 1.85),
-        Vector3(bx, floor_y + 0.05, z),
-        Color(0.75, 0.70, 0.61),
-        false
-    )
-
-    make_box(
-        "BalconyTopRail",
-        Vector3(0.08, 0.08, 1.85),
-        Vector3(front_x + outward * 0.83, floor_y + 0.83, z),
-        Color(0.22, 0.24, 0.23),
-        false
-    )
-
-    for bar_index in range(8):
-        var bar_z := z - 0.78 + float(bar_index) * 0.22
-
-        make_box(
-            "BalconyBar",
-            Vector3(0.065, 0.75, 0.045),
-            Vector3(
-                front_x + outward * 0.83,
-                floor_y + 0.43,
-                bar_z
-            ),
-            Color(0.26, 0.28, 0.27),
-            false
-        )
-
-    # بعض الملابس المعلقة
-    if building_id % 2 == 0:
-        make_box(
-            "LaundryRed",
-            Vector3(0.035, 0.40, 0.38),
-            Vector3(front_x + outward * 0.67, floor_y + 1.08, z + 0.25),
-            Color(0.72, 0.18, 0.16),
-            false
-        )
-
-        make_box(
-            "LaundryBlue",
-            Vector3(0.035, 0.32, 0.36),
-            Vector3(front_x + outward * 0.67, floor_y + 1.02, z - 0.27),
-            Color(0.20, 0.36, 0.68),
-            false
-        )
-
-
-# ==================================================
-# وحدات التكييف
-# ==================================================
-
-func create_air_conditioner(
-    front_x: float,
-    y: float,
-    z: float,
-    side: int
-) -> void:
-    make_box(
-        "AirConditioner",
-        Vector3(0.36, 0.34, 0.65),
-        Vector3(front_x + float(side) * 0.18, y - 0.92, z),
-        Color(0.78, 0.80, 0.77),
-        false
-    )
-
-
-# ==================================================
-# المحلات واللافتات العربية
-# ==================================================
-
-func create_shop(
-    front_x: float,
-    z: float,
-    side: int,
-    index: int
-) -> void:
-    var outward := -float(side)
-
-    make_box(
-        "ShopDoor",
-        Vector3(0.14, 2.15, 1.85),
-        Vector3(front_x, 1.16, z),
-        Color(0.26, 0.28, 0.27),
-        false
-    )
-
-    for ridge_index in range(8):
-        make_box(
-            "ShutterRidge",
-            Vector3(0.045, 0.035, 1.72),
-            Vector3(
-                front_x + outward * 0.09,
-                0.35 + float(ridge_index) * 0.23,
-                z
-            ),
-            Color(0.53, 0.55, 0.52),
-            false
-        )
-
-    make_box(
-        "ShopSignBoard",
-        Vector3(0.16, 0.56, 2.5),
-        Vector3(front_x + outward * 0.05, 2.65, z),
-        shop_colors[index % shop_colors.size()],
-        false
-    )
-
-    var sign := Label3D.new()
-    sign.name = "ArabicShopSign"
-    sign.text = shop_names[index % shop_names.size()]
-    sign.font_size = 32
-    sign.pixel_size = 0.008
-    sign.modulate = Color(1.0, 0.91, 0.68)
-    sign.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    sign.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    sign.position = Vector3(
-        front_x + outward * 0.15,
-        2.65,
-        z
-    )
-    sign.rotation.y = -float(side) * PI / 2.0
-    add_child(sign)
-
-
-# ==================================================
-# مداخل البيوت الريفية
-# ==================================================
-
-func create_village_entrance(
-    front_x: float,
-    z: float,
-    side: int
-) -> void:
-    var outward := -float(side)
-
-    make_box(
-        "VillageDoorFrame",
-        Vector3(0.20, 2.30, 1.95),
-        Vector3(front_x, 1.20, z),
-        Color(0.79, 0.67, 0.51),
-        false
-    )
-
-    make_box(
-        "VillageDoor",
-        Vector3(0.10, 2.05, 1.60),
-        Vector3(front_x + outward * 0.12, 1.12, z),
+        "Entrance",
+        Vector3(front_x - 0.08, 1.1, pos.z),
+        Vector3(0.12, 2.2, 1.4),
         Color(0.25, 0.18, 0.12),
         false
     )
 
-    make_box(
-        "VillageStep",
-        Vector3(0.75, 0.14, 2.10),
-        Vector3(front_x + outward * 0.35, 0.12, z),
-        Color(0.63, 0.57, 0.47),
-        false
-    )
+    # وحدات تكييف خارجية
+    if rng.randf() > 0.35:
+        make_box(
+            "AirConditioner",
+            Vector3(
+                front_x - 0.15,
+                minf(height - 1.0, 4.0),
+                pos.z + 2.0
+            ),
+            Vector3(0.35, 0.55, 0.8),
+            Color(0.78, 0.78, 0.73),
+            false
+        )
 
 
-# ==================================================
-# تفاصيل الأسطح
-# ==================================================
-
-func create_roof_details(
-    center_x: float,
-    height: float,
-    z: float,
-    index: int
-) -> void:
-    make_box(
-        "WaterTankBase",
-        Vector3(1.35, 0.15, 1.35),
-        Vector3(center_x + 1.2, height + 0.30, z + 1.2),
-        Color(0.53, 0.51, 0.45),
-        false
-    )
+func create_park() -> void:
+    var park_position := Vector3(25.0, 0.0, 20.0)
 
     make_box(
-        "WaterTank",
-        Vector3(1.0, 1.10, 1.0),
-        Vector3(center_x + 1.2, height + 0.90, z + 1.2),
-        Color(0.28, 0.36, 0.37),
-        false
-    )
-
-    if index % 2 == 0:
-        var dish := MeshInstance3D.new()
-        dish.name = "SatelliteDish"
-
-        var dish_mesh := SphereMesh.new()
-        dish_mesh.radius = 0.48
-        dish_mesh.height = 0.18
-        dish.mesh = dish_mesh
-
-        var material := StandardMaterial3D.new()
-        material.albedo_color = Color(0.70, 0.72, 0.70)
-        material.metallic = 0.4
-        material.roughness = 0.5
-        dish.material_override = material
-
-        dish.position = Vector3(center_x - 1.25, height + 0.65, z - 1.0)
-        dish.rotation_degrees = Vector3(35, 0, 0)
-        add_child(dish)
-
-
-# ==================================================
-# أعمدة الإنارة
-# ==================================================
-
-func create_lamp(x: float, z: float, direction: int) -> void:
-    make_box(
-        "StreetLampPole",
-        Vector3(0.12, 4.5, 0.12),
-        Vector3(x, 2.25, z),
-        Color(0.23, 0.25, 0.24),
-        false
-    )
-
-    make_box(
-        "StreetLampArm",
-        Vector3(0.75, 0.09, 0.09),
-        Vector3(x + float(direction) * 0.30, 4.45, z),
-        Color(0.23, 0.25, 0.24),
-        false
-    )
-
-    make_box(
-        "StreetLampHead",
-        Vector3(0.40, 0.16, 0.25),
-        Vector3(x + float(direction) * 0.65, 4.40, z),
-        Color(0.92, 0.80, 0.53),
-        false
-    )
-
-
-# ==================================================
-# علامات مميزة للحي
-# ==================================================
-
-func create_landmarks() -> void:
-    # مساحة خضراء صغيرة
-    make_box(
-        "NeighborhoodPark",
-        Vector3(24.0, 0.12, 22.0),
-        Vector3(26.0, 0.02, 20.0),
-        Color(0.25, 0.39, 0.20),
+        "ParkGrass",
+        park_position,
+        Vector3(28.0, 0.12, 30.0),
+        Color(0.2, 0.42, 0.17),
         true
     )
 
-    # ممر داخل المساحة الخضراء
+    # ممرات الحديقة
     make_box(
         "ParkPath",
-        Vector3(3.0, 0.08, 22.0),
-        Vector3(26.0, 0.12, 20.0),
-        Color(0.68, 0.60, 0.46),
+        park_position + Vector3(0.0, 0.08, 0.0),
+        Vector3(3.0, 0.08, 28.0),
+        Color(0.72, 0.67, 0.55),
         false
     )
 
+    var rng := RandomNumberGenerator.new()
+    rng.seed = 24680
 
-# ==================================================
-# إنشاء اللاعب
-# ==================================================
+    for i in range(18):
+        var tree_x := rng.randf_range(12.0, 38.0)
+        var tree_z := rng.randf_range(7.0, 33.0)
+        create_tree(Vector3(tree_x, 0.0, tree_z), rng)
+
+    # مقاعد الحديقة
+    for z in [12.0, 25.0]:
+        make_box(
+            "ParkBenchSeat",
+            Vector3(20.0, 0.65, z),
+            Vector3(2.0, 0.18, 0.6),
+            Color(0.35, 0.18, 0.08),
+            false
+        )
+
+        make_box(
+            "ParkBenchLegs",
+            Vector3(20.0, 0.35, z),
+            Vector3(1.6, 0.5, 0.15),
+            Color(0.15, 0.15, 0.15),
+            false
+        )
+
+
+func create_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
+    var trunk_height := rng.randf_range(2.0, 3.2)
+    var crown_size := rng.randf_range(1.4, 2.1)
+
+    var trunk := MeshInstance3D.new()
+    var trunk_mesh := CylinderMesh.new()
+    trunk_mesh.top_radius = 0.18
+    trunk_mesh.bottom_radius = 0.3
+    trunk_mesh.height = trunk_height
+    trunk.mesh = trunk_mesh
+    trunk.position = pos + Vector3(0.0, trunk_height / 2.0, 0.0)
+
+    var bark := StandardMaterial3D.new()
+    bark.albedo_color = Color(0.3, 0.16, 0.08)
+    trunk.material_override = bark
+    add_child(trunk)
+
+    var crown := MeshInstance3D.new()
+    var crown_mesh := SphereMesh.new()
+    crown_mesh.radius = crown_size
+    crown_mesh.height = crown_size * 2.0
+    crown.mesh = crown_mesh
+    crown.position = pos + Vector3(
+        0.0,
+        trunk_height + crown_size * 0.55,
+        0.0
+    )
+    crown.scale = Vector3(1.0, 1.15, 1.0)
+
+    var leaves := StandardMaterial3D.new()
+    leaves.albedo_color = Color(
+        rng.randf_range(0.08, 0.18),
+        rng.randf_range(0.32, 0.48),
+        rng.randf_range(0.08, 0.16)
+    )
+    crown.material_override = leaves
+    add_child(crown)
+
+
+func create_street_lights() -> void:
+    for road_x in [-120.0, -60.0, 0.0, 60.0, 120.0]:
+        for side in [-1.0, 1.0]:
+            for z in range(-220, 221, 40):
+                var lamp_pos := Vector3(
+                    road_x + side * 8.5,
+                    0.0,
+                    float(z)
+                )
+
+                make_box(
+                    "LampPole",
+                    lamp_pos + Vector3(0.0, 3.0, 0.0),
+                    Vector3(0.16, 6.0, 0.16),
+                    Color(0.2, 0.2, 0.2),
+                    true
+                )
+
+                make_box(
+                    "LampHead",
+                    lamp_pos + Vector3(0.0, 6.0, -0.5),
+                    Vector3(0.65, 0.18, 1.0),
+                    Color(1.0, 0.86, 0.55),
+                    false
+                )
+
 
 func create_player() -> void:
-    player_reference = PLAYER_SCENE.instantiate() as CharacterBody3D
+    var player_instance := PLAYER_SCENE.instantiate()
+    player_instance.name = "Player"
+    add_child(player_instance)
+    player_reference = player_instance as Node3D
+    player_reference.position = Vector3(0.0, 0.2, 5.0)
 
-    if player_reference == null:
-        push_error("تعذر إنشاء اللاعب. راجع scenes/player.tscn")
-        return
-
-    player_reference.name = "Player"
-    player_reference.position = Vector3(0, 0.1, 5)
-    add_child(player_reference)
-
-    # ربط اللاعب بمدير العالم
-    if world_manager != null and world_manager.has_method("set_player"):
+    if is_instance_valid(world_manager):
         world_manager.call("set_player", player_reference)
 
 
-# ==================================================
-# أزرار التحكم بالموبايل
-# ==================================================
+func create_world_extras() -> void:
+    var extras := Node3D.new()
+    extras.name = "WorldExtras"
+    extras.set_script(WORLD_EXTRAS_SCRIPT)
+    add_child(extras)
+
+    if is_instance_valid(player_reference):
+        extras.call("set_player", player_reference)
+
 
 func create_mobile_controls() -> void:
     var canvas := CanvasLayer.new()
-    canvas.name = "TouchControls"
+    canvas.name = "MobileControls"
+    canvas.layer = 5
     add_child(canvas)
-
-    var root := Control.new()
-    root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    root.mouse_filter = Control.MOUSE_FILTER_PASS
-    canvas.add_child(root)
 
     var joystick := Control.new()
     joystick.name = "VirtualJoystick"
     joystick.set_script(JOYSTICK_SCRIPT)
-    joystick.add_to_group("virtual_joystick")
-    joystick.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-    joystick.offset_left = 25
-    joystick.offset_top = -210
-    joystick.offset_right = 205
-    joystick.offset_bottom = -30
-    root.add_child(joystick)
+    joystick.position = Vector2(35.0, 430.0)
+    joystick.custom_minimum_size = Vector2(150.0, 150.0)
+    canvas.add_child(joystick)
 
-    make_action_button(root, "قفز", -125, -115, "jump")
-    make_action_button(root, "جري", -230, -115, "run")
-    make_action_button(root, "تفاعل", -125, -220, "interact")
+    var buttons := VBoxContainer.new()
+    buttons.name = "ActionButtons"
+    buttons.anchor_left = 1.0
+    buttons.anchor_top = 1.0
+    buttons.anchor_right = 1.0
+    buttons.anchor_bottom = 1.0
+    buttons.offset_left = -150.0
+    buttons.offset_top = -310.0
+    buttons.offset_right = -20.0
+    buttons.offset_bottom = -20.0
+    buttons.add_theme_constant_override("separation", 12)
+    canvas.add_child(buttons)
+
+    var jump_button := create_action_button("×")
+    buttons.add_child(jump_button)
+    jump_button.pressed.connect(_on_jump_pressed)
+
+    var run_button := create_action_button("R2")
+    buttons.add_child(run_button)
+    run_button.button_down.connect(_on_run_pressed)
+    run_button.button_up.connect(_on_run_released)
+
+    var interact_button := create_action_button("□")
+    buttons.add_child(interact_button)
+    interact_button.pressed.connect(_on_interact_pressed)
 
 
-func make_action_button(
-    root: Control,
-    label: String,
-    left_offset: float,
-    top_offset: float,
-    action_type: String
-) -> void:
+func create_action_button(label_text: String) -> Button:
     var button := Button.new()
-    button.text = label
-    button.focus_mode = Control.FOCUS_NONE
-    button.add_theme_font_size_override("font_size", 20)
+    button.text = label_text
+    button.custom_minimum_size = Vector2(100.0, 70.0)
+    button.add_theme_font_size_override("font_size", 26)
 
-    button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-    button.offset_left = left_offset
-    button.offset_top = top_offset
-    button.offset_right = left_offset + 90
-    button.offset_bottom = top_offset + 75
+    var normal := StyleBoxFlat.new()
+    normal.bg_color = Color(0.08, 0.08, 0.09, 0.88)
+    normal.border_color = Color(0.85, 0.72, 0.35)
+    normal.set_border_width_all(2)
+    normal.set_corner_radius_all(18)
+    button.add_theme_stylebox_override("normal", normal)
 
-    root.add_child(button)
+    var pressed_style := StyleBoxFlat.new()
+    pressed_style.bg_color = Color(0.35, 0.27, 0.12, 0.95)
+    pressed_style.border_color = Color(1.0, 0.82, 0.3)
+    pressed_style.set_border_width_all(3)
+    pressed_style.set_corner_radius_all(18)
+    button.add_theme_stylebox_override("pressed", pressed_style)
 
-    if action_type == "jump":
-        button.button_down.connect(_jump_pressed)
-    elif action_type == "run":
-        button.button_down.connect(_run_pressed)
-        button.button_up.connect(_run_released)
-    elif action_type == "interact":
-        button.pressed.connect(_interact_pressed)
+    return button
 
 
-func _jump_pressed() -> void:
+func _on_jump_pressed() -> void:
     if is_instance_valid(player_reference):
-        player_reference.request_jump()
+        if player_reference.has_method("request_jump"):
+            player_reference.call("request_jump")
 
 
-func _run_pressed() -> void:
+func _on_run_pressed() -> void:
     if is_instance_valid(player_reference):
-        player_reference.set_running(true)
+        if player_reference.has_method("set_running"):
+            player_reference.call("set_running", true)
 
 
-func _run_released() -> void:
+func _on_run_released() -> void:
     if is_instance_valid(player_reference):
-        player_reference.set_running(false)
+        if player_reference.has_method("set_running"):
+            player_reference.call("set_running", false)
 
 
-func _interact_pressed() -> void:
+func _on_interact_pressed() -> void:
     if is_instance_valid(player_reference):
-        player_reference.interact()
+        if player_reference.has_method("interact"):
+            player_reference.call("interact")
 
-
-# ==================================================
-# إنشاء المجسمات والتصادمات
-# ==================================================
 
 func make_box(
     object_name: String,
-    box_size: Vector3,
-    box_position: Vector3,
-    box_color: Color,
-    has_collision: bool
-) -> void:
-    var holder: Node3D
+    pos: Vector3,
+    dimensions: Vector3,
+    color: Color,
+    with_collision: bool
+) -> Node3D:
+    var mesh_instance := MeshInstance3D.new()
+    mesh_instance.name = object_name
 
-    if has_collision:
+    var mesh := BoxMesh.new()
+    mesh.size = dimensions
+    mesh_instance.mesh = mesh
+    mesh_instance.position = pos
+
+    var material := StandardMaterial3D.new()
+    material.albedo_color = color
+    material.roughness = 0.9
+    mesh_instance.material_override = material
+
+    if with_collision:
         var body := StaticBody3D.new()
-        body.collision_layer = 1
-        body.collision_mask = 1
+        body.name = object_name + "Body"
+        body.position = pos
 
         var collision := CollisionShape3D.new()
         var shape := BoxShape3D.new()
-        shape.size = box_size
+        shape.size = dimensions
         collision.shape = shape
+
         body.add_child(collision)
+        add_child(body)
+        add_child(mesh_instance)
+        return body
 
-        holder = body
-    else:
-        holder = Node3D.new()
-
-    holder.name = object_name
-    holder.position = box_position
-
-    var mesh_instance := MeshInstance3D.new()
-    var mesh := BoxMesh.new()
-    mesh.size = box_size
-    mesh_instance.mesh = mesh
-
-    var material := StandardMaterial3D.new()
-    material.albedo_color = box_color
-    material.roughness = 0.88
-    material.metallic = 0.04
-
-    mesh_instance.material_override = material
-    holder.add_child(mesh_instance)
-    add_child(holder)
+    add_child(mesh_instance)
+    return mesh_instance
