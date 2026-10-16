@@ -1,140 +1,264 @@
+extends Node3D
 
-extends CharacterBody3D
+# شخصية ابن البلد - نموذج ثلاثي الأبعاد متحرك
+# يوضع هذا السكربت على CharacterVisual
 
-signal interact_requested
+const SKIN := Color("#B9794F")
+const HAIR := Color("#211B19")
+const SHIRT := Color("#D7D0BD")
+const PANTS := Color("#303944")
+const SHOES := Color("#EEE9DF")
+const DARK := Color("#30241F")
 
-const WALK_SPEED: float = 5.0
-const RUN_SPEED: float = 8.0
-const JUMP_VELOCITY: float = 4.5
-const LOOK_SENSITIVITY: float = 0.005
-const CAMERA_MIN_ANGLE: float = -45.0
-const CAMERA_MAX_ANGLE: float = 25.0
-const INPUT_DEADZONE: float = 0.12
+var body_root: Node3D
+var left_arm: Node3D
+var right_arm: Node3D
+var left_leg: Node3D
+var right_leg: Node3D
 
-@onready var camera_pivot: Node3D = $CameraPivot
-
-var joystick: Control = null
-var running: bool = false
-var jump_requested: bool = false
+var player: CharacterBody3D
+var walk_time := 0.0
 
 
 func _ready() -> void:
-	_find_joystick()
+    player = get_parent() as CharacterBody3D
+    build_character()
 
 
-func _find_joystick() -> void:
-	joystick = get_tree().get_first_node_in_group(
-		"virtual_joystick"
-	) as Control
+func _process(delta: float) -> void:
+    if not is_instance_valid(player):
+        return
 
-	if not is_instance_valid(joystick):
-		push_warning(
-			"لم يتم العثور على عصا التحكم الافتراضية."
-		)
+    var speed := Vector2(
+        player.velocity.x,
+        player.velocity.z
+    ).length()
 
+    var moving := speed > 0.15
 
-func _physics_process(delta: float) -> void:
-	if not is_on_floor():
-		velocity += get_gravity() * delta
+    if moving:
+        walk_time += delta * (12.0 if speed > 6.0 else 8.0)
 
-	var input_dir: Vector2 = Input.get_vector(
-		"ui_left",
-		"ui_right",
-		"ui_up",
-		"ui_down"
-	)
+    var swing := sin(walk_time) * 0.65 if moving else 0.0
 
-	if not is_instance_valid(joystick):
-		_find_joystick()
+    left_leg.rotation.x = swing
+    right_leg.rotation.x = -swing
 
-	if is_instance_valid(joystick):
-		var joystick_output: Variant = joystick.get("output")
+    left_arm.rotation.x = -swing * 0.8
+    right_arm.rotation.x = swing * 0.8
 
-		if joystick_output is Vector2:
-			var stick_value: Vector2 = joystick_output
-
-			if stick_value.length() > INPUT_DEADZONE:
-				input_dir = stick_value
-
-	var forward: Vector3 = -camera_pivot.global_basis.z
-	forward.y = 0.0
-	forward = forward.normalized()
-
-	var right: Vector3 = camera_pivot.global_basis.x
-	right.y = 0.0
-	right = right.normalized()
-
-	var direction: Vector3 = (
-		right * input_dir.x
-		- forward * input_dir.y
-	)
-
-	if direction.length_squared() > 0.001:
-		direction = direction.normalized()
-
-		var speed: float = RUN_SPEED if running else WALK_SPEED
-
-		velocity.x = direction.x * speed
-		velocity.z = direction.z * speed
-	else:
-		velocity.x = move_toward(
-			velocity.x,
-			0.0,
-			WALK_SPEED * 2.0 * delta
-		)
-
-		velocity.z = move_toward(
-			velocity.z,
-			0.0,
-			WALK_SPEED * 2.0 * delta
-		)
-
-	var wants_to_jump: bool = (
-		jump_requested
-		or Input.is_action_just_pressed("ui_accept")
-	)
-
-	if wants_to_jump and is_on_floor():
-		velocity.y = JUMP_VELOCITY
-
-	jump_requested = false
-	move_and_slide()
+    body_root.position.y = (
+        0.025 + absf(sin(walk_time * 2.0)) * 0.035
+        if moving else 0.0
+    )
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventScreenDrag:
-		var screen_width: float = (
-			get_viewport().get_visible_rect().size.x
-		)
+func build_character() -> void:
+    body_root = Node3D.new()
+    body_root.name = "IbnElBaladModel"
+    add_child(body_root)
 
-		if event.position.x > screen_width * 0.4:
-			rotate_camera(event.relative)
+    # الجسم والقميص
+    make_capsule(
+        body_root, "Torso",
+        Vector3(0, 1.12, 0),
+        0.24, 0.72, SHIRT,
+        Vector3(1.15, 1.0, 0.85)
+    )
 
-	elif event is InputEventMouseMotion:
-		if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
-			rotate_camera(event.relative)
+    # الرقبة والرأس
+    make_capsule(
+        body_root, "Neck",
+        Vector3(0, 1.60, 0),
+        0.09, 0.18, SKIN
+    )
+
+    make_sphere(
+        body_root, "Head",
+        Vector3(0, 1.84, 0),
+        Vector3(0.23, 0.28, 0.21), SKIN
+    )
+
+    # الشعر
+    make_sphere(
+        body_root, "Hair",
+        Vector3(0, 2.025, 0.015),
+        Vector3(0.235, 0.115, 0.215), HAIR
+    )
+
+    # العينان والشارب - الوجه باتجاه -Z
+    make_sphere(
+        body_root, "LeftEye",
+        Vector3(-0.08, 1.86, -0.195),
+        Vector3(0.025, 0.025, 0.018), DARK
+    )
+
+    make_sphere(
+        body_root, "RightEye",
+        Vector3(0.08, 1.86, -0.195),
+        Vector3(0.025, 0.025, 0.018), DARK
+    )
+
+    make_sphere(
+        body_root, "Mustache",
+        Vector3(0, 1.765, -0.205),
+        Vector3(0.085, 0.025, 0.025), HAIR
+    )
+
+    # الذراعان
+    left_arm = make_limb(
+        body_root, "LeftArm",
+        Vector3(-0.34, 1.43, 0),
+        0.085, 0.48, SHIRT
+    )
+
+    right_arm = make_limb(
+        body_root, "RightArm",
+        Vector3(0.34, 1.43, 0),
+        0.085, 0.48, SHIRT
+    )
+
+    # اليدان
+    make_sphere(
+        left_arm, "Hand",
+        Vector3(0, -0.28, 0),
+        Vector3(0.075, 0.085, 0.075), SKIN
+    )
+
+    make_sphere(
+        right_arm, "Hand",
+        Vector3(0, -0.28, 0),
+        Vector3(0.075, 0.085, 0.075), SKIN
+    )
+
+    # الرجلان
+    left_leg = make_limb(
+        body_root, "LeftLeg",
+        Vector3(-0.145, 0.78, 0),
+        0.105, 0.48, PANTS
+    )
+
+    right_leg = make_limb(
+        body_root, "RightLeg",
+        Vector3(0.145, 0.78, 0),
+        0.105, 0.48, PANTS
+    )
+
+    # الحذاء
+    make_box(
+        left_leg, "LeftShoe",
+        Vector3(0, -0.255, -0.055),
+        Vector3(0.17, 0.09, 0.26), SHOES
+    )
+
+    make_box(
+        right_leg, "RightShoe",
+        Vector3(0, -0.255, -0.055),
+        Vector3(0.17, 0.09, 0.26), SHOES
+    )
+
+    # جيب القميص
+    make_box(
+        body_root, "ShirtPocket",
+        Vector3(0.18, 1.28, -0.202),
+        Vector3(0.07, 0.09, 0.018),
+        Color("#B9AF9A")
+    )
 
 
-func rotate_camera(motion: Vector2) -> void:
-	camera_pivot.rotate_y(
-		-motion.x * LOOK_SENSITIVITY
-	)
+func make_limb(
+    parent: Node3D,
+    node_name: String,
+    at: Vector3,
+    radius: float,
+    height: float,
+    color: Color
+) -> Node3D:
+    var pivot := Node3D.new()
+    pivot.name = node_name
+    pivot.position = at
+    parent.add_child(pivot)
 
-	camera_pivot.rotation.x = clampf(
-		camera_pivot.rotation.x
-		- motion.y * LOOK_SENSITIVITY,
-		deg_to_rad(CAMERA_MIN_ANGLE),
-		deg_to_rad(CAMERA_MAX_ANGLE)
-	)
+    make_capsule(
+        pivot, "Limb",
+        Vector3(0, -height * 0.5, 0),
+        radius, height, color
+    )
+
+    return pivot
 
 
-func request_jump() -> void:
-	jump_requested = true
+func make_capsule(
+    parent: Node3D,
+    node_name: String,
+    at: Vector3,
+    radius: float,
+    height: float,
+    color: Color,
+    stretch: Vector3 = Vector3.ONE
+) -> MeshInstance3D:
+    var mesh_instance := MeshInstance3D.new()
+    mesh_instance.name = node_name
+
+    var mesh := CapsuleMesh.new()
+    mesh.radius = radius
+    mesh.height = maxf(height, radius * 2.0)
+
+    mesh_instance.mesh = mesh
+    mesh_instance.position = at
+    mesh_instance.scale = stretch
+    mesh_instance.material_override = make_material(color)
+
+    parent.add_child(mesh_instance)
+    return mesh_instance
 
 
-func set_running(value: bool) -> void:
-	running = value
+func make_sphere(
+    parent: Node3D,
+    node_name: String,
+    at: Vector3,
+    dimensions: Vector3,
+    color: Color
+) -> MeshInstance3D:
+    var instance := MeshInstance3D.new()
+    instance.name = node_name
+
+    var mesh := SphereMesh.new()
+    mesh.radius = 1.0
+    mesh.height = 2.0
+
+    instance.mesh = mesh
+    instance.position = at
+    instance.scale = dimensions
+    instance.material_override = make_material(color)
+
+    parent.add_child(instance)
+    return instance
 
 
-func interact() -> void:
-	interact_requested.emit()
+func make_box(
+    parent: Node3D,
+    node_name: String,
+    at: Vector3,
+    dimensions: Vector3,
+    color: Color
+) -> MeshInstance3D:
+    var instance := MeshInstance3D.new()
+    instance.name = node_name
+
+    var mesh := BoxMesh.new()
+    mesh.size = dimensions
+
+    instance.mesh = mesh
+    instance.position = at
+    instance.material_override = make_material(color)
+
+    parent.add_child(instance)
+    return instance
+
+
+func make_material(color: Color) -> StandardMaterial3D:
+    var material := StandardMaterial3D.new()
+    material.albedo_color = color
+    material.roughness = 0.85
+    return material
