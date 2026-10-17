@@ -24,6 +24,10 @@ func _ready() -> void:
 	create_world_life()
 
 
+# --------------------------------------------------
+# البيئة والإضاءة
+# --------------------------------------------------
+
 func create_environment() -> void:
 	var sun := DirectionalLight3D.new()
 	sun.name = "Sun"
@@ -53,6 +57,10 @@ func create_environment() -> void:
 	world_env.environment = environment
 	add_child(world_env)
 
+
+# --------------------------------------------------
+# إنشاء العالم والمدينة
+# --------------------------------------------------
 
 func create_world_manager() -> void:
 	world_manager = Node3D.new()
@@ -222,19 +230,10 @@ func create_building(
 		false
 	)
 
-	if rng.randf() > 0.35:
-		make_box(
-			"AirConditioner",
-			Vector3(
-				front_x - 0.15,
-				minf(height - 1.0, 4.0),
-				pos.z + 2.0
-			),
-			Vector3(0.35, 0.55, 0.8),
-			Color(0.78, 0.78, 0.73),
-			false
-		)
 
+# --------------------------------------------------
+# الحديقة والأشجار
+# --------------------------------------------------
 
 func create_park() -> void:
 	var park_position := Vector3(25.0, 0.0, 20.0)
@@ -272,22 +271,12 @@ func create_park() -> void:
 			false
 		)
 
-		make_box(
-			"ParkBenchLegs",
-			Vector3(20.0, 0.35, z),
-			Vector3(1.6, 0.5, 0.15),
-			Color(0.15, 0.15, 0.15),
-			false
-		)
-
 
 func create_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	var trunk_height := rng.randf_range(2.0, 3.2)
 	var crown_size := rng.randf_range(1.4, 2.1)
 
 	var trunk := MeshInstance3D.new()
-	trunk.name = "TreeTrunk"
-
 	var trunk_mesh := CylinderMesh.new()
 	trunk_mesh.top_radius = 0.18
 	trunk_mesh.bottom_radius = 0.3
@@ -301,8 +290,6 @@ func create_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	add_child(trunk)
 
 	var crown := MeshInstance3D.new()
-	crown.name = "TreeCrown"
-
 	var crown_mesh := SphereMesh.new()
 	crown_mesh.radius = crown_size
 	crown_mesh.height = crown_size * 2.0
@@ -313,11 +300,7 @@ func create_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	crown.scale = Vector3(1.0, 1.15, 1.0)
 
 	var leaves := StandardMaterial3D.new()
-	leaves.albedo_color = Color(
-		rng.randf_range(0.08, 0.18),
-		rng.randf_range(0.32, 0.48),
-		rng.randf_range(0.08, 0.16)
-	)
+	leaves.albedo_color = Color(0.12, 0.4, 0.12)
 	crown.material_override = leaves
 	add_child(crown)
 
@@ -349,8 +332,12 @@ func create_street_lights() -> void:
 				)
 
 
+# --------------------------------------------------
+# القرية المصرية
+# --------------------------------------------------
+
 func create_egyptian_village() -> void:
-	# طريق القرية الترابي
+	# الطريق الترابي
 	make_box(
 		"VillageRoad",
 		Vector3(145.0, 0.02, 350.0),
@@ -377,7 +364,7 @@ func create_egyptian_village() -> void:
 			true
 		)
 
-	# البيوت الريفية
+	# بيوت القرية
 	for house_z in [255.0, 280.0, 305.0, 330.0, 355.0, 380.0]:
 		create_rural_house(Vector3(156.0, 0.0, house_z))
 
@@ -388,6 +375,16 @@ func create_egyptian_village() -> void:
 	# النخيل
 	for palm_z in [250.0, 410.0, 485.0]:
 		create_palm_tree(Vector3(174.0, 0.0, palm_z))
+
+	# القهوة والسوق
+	create_baladi_cafe(Vector3(133.0, 0.0, 280.0))
+	create_baladi_market(Vector3(133.0, 0.0, 310.0))
+
+	# أهل القرية
+	create_village_npcs()
+
+	# توك توك متوقف بجوار الطريق
+	create_tuk_tuk(Vector3(139.0, 0.0, 350.0))
 
 
 func create_rural_house(pos: Vector3) -> void:
@@ -483,10 +480,261 @@ func create_palm_tree(pos: Vector3) -> void:
 		add_child(leaf)
 
 
-func create_player() -> void:
-	var player_instance: CharacterBody3D = (
-		PLAYER_SCENE.instantiate() as CharacterBody3D
+# --------------------------------------------------
+# القهوة البلدي
+# --------------------------------------------------
+
+func create_baladi_cafe(pos: Vector3) -> void:
+	make_box(
+		"BaladiCafe",
+		pos + Vector3(0.0, 1.8, 0.0),
+		Vector3(9.0, 3.6, 7.0),
+		Color("#c5a477"),
+		true
 	)
+
+	# واجهة القهوة
+	make_box(
+		"CafeFront",
+		pos + Vector3(-4.56, 1.5, 0.0),
+		Vector3(0.12, 2.8, 5.0),
+		Color("#70462b"),
+		false
+	)
+
+	# لافتة القهوة
+	make_box(
+		"CafeSign",
+		pos + Vector3(-4.7, 3.35, 0.0),
+		Vector3(0.18, 0.75, 4.8),
+		Color("#294a2c"),
+		false
+	)
+
+	# ترابيزات وكراسي
+	for table_z in [pos.z - 2.0, pos.z + 2.0]:
+		make_box(
+			"CafeTable",
+			Vector3(pos.x - 6.0, 0.8, table_z),
+			Vector3(1.4, 0.15, 1.4),
+			Color("#6b3e20"),
+			false
+		)
+
+		for chair_x in [pos.x - 7.0, pos.x - 5.0]:
+			make_box(
+				"CafeChair",
+				Vector3(chair_x, 0.45, table_z),
+				Vector3(0.65, 0.75, 0.65),
+				Color("#38543a"),
+				false
+			)
+
+
+# --------------------------------------------------
+# السوق البلدي
+# --------------------------------------------------
+
+func create_baladi_market(pos: Vector3) -> void:
+	make_box(
+		"MarketShop",
+		pos + Vector3(0.0, 1.7, 0.0),
+		Vector3(8.0, 3.4, 6.0),
+		Color("#d1b58a"),
+		true
+	)
+
+	make_box(
+		"MarketAwning",
+		pos + Vector3(-4.3, 2.7, 0.0),
+		Vector3(0.9, 0.25, 6.8),
+		Color("#9c3429"),
+		false
+	)
+
+	make_box(
+		"MarketCounter",
+		pos + Vector3(-4.7, 0.7, 0.0),
+		Vector3(0.8, 1.2, 4.5),
+		Color("#654326"),
+		false
+	)
+
+	# صناديق الخضار
+	var produce_colors: Array[Color] = [
+		Color("#4d8b35"),
+		Color("#bd3e2d"),
+		Color("#d9a63b")
+	]
+
+	for i in range(3):
+		make_box(
+			"ProduceCrate",
+			pos + Vector3(-5.3, 1.45, -1.5 + float(i) * 1.5),
+			Vector3(0.65, 0.45, 1.2),
+			produce_colors[i],
+			false
+		)
+
+
+# --------------------------------------------------
+# أهل القرية
+# --------------------------------------------------
+
+func create_village_npcs() -> void:
+	var positions: Array[Vector3] = [
+		Vector3(139.0, 0.0, 265.0),
+		Vector3(141.0, 0.0, 273.0),
+		Vector3(145.0, 0.0, 292.0),
+		Vector3(137.0, 0.0, 305.0),
+		Vector3(143.0, 0.0, 322.0),
+		Vector3(137.0, 0.0, 365.0)
+	]
+
+	var clothes: Array[Color] = [
+		Color("#e0d1b4"),
+		Color("#466b45"),
+		Color("#78523c"),
+		Color("#a8a8a0"),
+		Color("#344f78"),
+		Color("#b18a52")
+	]
+
+	for i in range(positions.size()):
+		var npc := Node3D.new()
+		npc.name = "VillageResident_%d" % i
+		npc.position = positions[i]
+		add_child(npc)
+
+		make_child_capsule(
+			npc,
+			"Galabeya",
+			Vector3(0.0, 0.85, 0.0),
+			0.34,
+			1.25,
+			clothes[i]
+		)
+
+		make_child_sphere(
+			npc,
+			"Head",
+			Vector3(0.0, 1.65, 0.0),
+			0.24,
+			Color("#a87551")
+		)
+
+		make_child_box(
+			npc,
+			"Hair",
+			Vector3(0.0, 1.83, 0.0),
+			Vector3(0.35, 0.12, 0.35),
+			Color("#30251d")
+		)
+
+
+# --------------------------------------------------
+# توك توك
+# --------------------------------------------------
+
+func create_tuk_tuk(pos: Vector3) -> void:
+	var tuk := Node3D.new()
+	tuk.name = "BaladiTukTuk"
+	tuk.position = pos
+	add_child(tuk)
+
+	# قاعدة التوك توك
+	make_child_box(
+		tuk,
+		"TukChassis",
+		Vector3(0.0, 0.55, 0.0),
+		Vector3(1.6, 0.3, 2.6),
+		Color("#252525")
+	)
+
+	# جسم التوك توك
+	make_child_box(
+		tuk,
+		"TukBody",
+		Vector3(0.0, 1.0, 0.1),
+		Vector3(1.5, 0.8, 1.8),
+		Color("#d5b72c")
+	)
+
+	# السقف
+	make_child_box(
+		tuk,
+		"TukRoof",
+		Vector3(0.0, 1.9, 0.0),
+		Vector3(1.7, 0.16, 2.1),
+		Color("#247343")
+	)
+
+	# المقعد
+	make_child_box(
+		tuk,
+		"TukSeat",
+		Vector3(0.0, 1.05, 0.65),
+		Vector3(1.1, 0.35, 0.5),
+		Color("#292929")
+	)
+
+	# الزجاج الأمامي
+	make_child_box(
+		tuk,
+		"TukWindshield",
+		Vector3(0.0, 1.55, -0.7),
+		Vector3(1.15, 0.55, 0.06),
+		Color("#75a8b8")
+	)
+
+	# العجلات
+	for side in [-1.0, 1.0]:
+		for end_z in [-0.85, 0.85]:
+			var wheel := MeshInstance3D.new()
+			wheel.name = "TukWheel"
+
+			var wheel_mesh := CylinderMesh.new()
+			wheel_mesh.top_radius = 0.32
+			wheel_mesh.bottom_radius = 0.32
+			wheel_mesh.height = 0.2
+			wheel.mesh = wheel_mesh
+
+			wheel.position = Vector3(
+				side * 0.82,
+				0.35,
+				end_z
+			)
+			wheel.rotation_degrees.z = 90.0
+
+			var wheel_material := StandardMaterial3D.new()
+			wheel_material.albedo_color = Color("#171717")
+			wheel.material_override = wheel_material
+			tuk.add_child(wheel)
+
+	# عجلة أمامية إضافية
+	var front_wheel := MeshInstance3D.new()
+	front_wheel.name = "TukFrontWheel"
+
+	var front_mesh := CylinderMesh.new()
+	front_mesh.top_radius = 0.28
+	front_mesh.bottom_radius = 0.28
+	front_mesh.height = 0.2
+	front_wheel.mesh = front_mesh
+	front_wheel.position = Vector3(0.0, 0.3, -1.25)
+	front_wheel.rotation_degrees.z = 90.0
+
+	var front_material := StandardMaterial3D.new()
+	front_material.albedo_color = Color("#171717")
+	front_wheel.material_override = front_material
+	tuk.add_child(front_wheel)
+
+
+# --------------------------------------------------
+# اللاعب
+# --------------------------------------------------
+
+func create_player() -> void:
+	var player_instance := PLAYER_SCENE.instantiate() as CharacterBody3D
 
 	if player_instance == null:
 		push_error("مشهد اللاعب لا يحتوي على CharacterBody3D.")
@@ -501,6 +749,10 @@ func create_player() -> void:
 	if is_instance_valid(world_manager):
 		world_manager.call("set_player", player_reference)
 
+
+# --------------------------------------------------
+# إضافات العالم والحياة والمهام
+# --------------------------------------------------
 
 func create_world_extras() -> void:
 	world_extras = Node3D.new()
@@ -528,6 +780,10 @@ func create_world_life() -> void:
 			)
 
 
+# --------------------------------------------------
+# أزرار الموبايل
+# --------------------------------------------------
+
 func create_mobile_controls() -> void:
 	var canvas := CanvasLayer.new()
 	canvas.name = "MobileControls"
@@ -537,6 +793,7 @@ func create_mobile_controls() -> void:
 	var joystick := Control.new()
 	joystick.name = "VirtualJoystick"
 	joystick.set_script(JOYSTICK_SCRIPT)
+	joystick.add_to_group("virtual_joystick")
 	joystick.position = Vector2(35.0, 430.0)
 	joystick.custom_minimum_size = Vector2(150.0, 150.0)
 	canvas.add_child(joystick)
@@ -615,6 +872,10 @@ func _on_interact_pressed() -> void:
 			player_reference.call("interact")
 
 
+# --------------------------------------------------
+# دوال إنشاء المجسمات
+# --------------------------------------------------
+
 func make_box(
 	object_name: String,
 	pos: Vector3,
@@ -652,3 +913,76 @@ func make_box(
 
 	add_child(mesh_instance)
 	return mesh_instance
+
+
+func make_child_box(
+	parent: Node3D,
+	object_name: String,
+	pos: Vector3,
+	dimensions: Vector3,
+	color: Color
+) -> MeshInstance3D:
+	var part := MeshInstance3D.new()
+	part.name = object_name
+
+	var mesh := BoxMesh.new()
+	mesh.size = dimensions
+	part.mesh = mesh
+	part.position = pos
+
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = 0.85
+	part.material_override = material
+
+	parent.add_child(part)
+	return part
+
+
+func make_child_sphere(
+	parent: Node3D,
+	object_name: String,
+	pos: Vector3,
+	radius: float,
+	color: Color
+) -> MeshInstance3D:
+	var part := MeshInstance3D.new()
+	part.name = object_name
+
+	var mesh := SphereMesh.new()
+	mesh.radius = radius
+	mesh.height = radius * 2.0
+	part.mesh = mesh
+	part.position = pos
+
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	part.material_override = material
+
+	parent.add_child(part)
+	return part
+
+
+func make_child_capsule(
+	parent: Node3D,
+	object_name: String,
+	pos: Vector3,
+	radius: float,
+	height: float,
+	color: Color
+) -> MeshInstance3D:
+	var part := MeshInstance3D.new()
+	part.name = object_name
+
+	var mesh := CapsuleMesh.new()
+	mesh.radius = radius
+	mesh.height = height
+	part.mesh = mesh
+	part.position = pos
+
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	part.material_override = material
+
+	parent.add_child(part)
+	return part
