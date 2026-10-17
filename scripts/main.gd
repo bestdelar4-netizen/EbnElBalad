@@ -17,6 +17,7 @@ func _ready() -> void:
 	create_environment()
 	create_world_manager()
 	create_world()
+	create_egyptian_village()
 	create_mobile_controls()
 	create_player()
 	create_world_extras()
@@ -72,14 +73,13 @@ func create_ground() -> void:
 	make_box(
 		"CityGround",
 		Vector3(0.0, -0.5, 0.0),
-		Vector3(340.0, 1.0, 520.0),
+		Vector3(440.0, 1.0, 1100.0),
 		Color(0.65, 0.57, 0.4),
 		true
 	)
 
 
 func create_roads() -> void:
-	# الشوارع الرئيسية
 	for road_x in [-120.0, -60.0, 0.0, 60.0, 120.0]:
 		make_box(
 			"MainRoad",
@@ -89,7 +89,6 @@ func create_roads() -> void:
 			true
 		)
 
-		# الأرصفة
 		for side in [-1.0, 1.0]:
 			make_box(
 				"Sidewalk",
@@ -99,7 +98,6 @@ func create_roads() -> void:
 				true
 			)
 
-		# خطوط الطريق
 		for z in range(-230, 231, 12):
 			make_box(
 				"RoadMarking",
@@ -109,7 +107,6 @@ func create_roads() -> void:
 				false
 			)
 
-	# الشوارع العرضية
 	for road_z in range(-240, 241, 60):
 		make_box(
 			"CrossRoad",
@@ -175,7 +172,6 @@ func create_building(
 		true
 	)
 
-	# حافة سطح المبنى
 	make_box(
 		"RoofEdge",
 		pos + Vector3(0.0, height + 0.15, 0.0),
@@ -184,12 +180,10 @@ func create_building(
 		true
 	)
 
-	# الواجهة الأمامية
 	var front_x := pos.x - signf(pos.x) * (
 		dimensions.x / 2.0 + 0.04
 	)
 
-	# الشبابيك
 	for floor_index in range(1, int(height / 3.0)):
 		for window_index in range(2):
 			var window_z := pos.z + (
@@ -220,7 +214,6 @@ func create_building(
 				false
 			)
 
-	# باب أو محل
 	make_box(
 		"Entrance",
 		Vector3(front_x - 0.08, 1.1, pos.z),
@@ -229,7 +222,6 @@ func create_building(
 		false
 	)
 
-	# تكييف خارجي
 	if rng.randf() > 0.35:
 		make_box(
 			"AirConditioner",
@@ -271,7 +263,6 @@ func create_park() -> void:
 		var tree_z := rng.randf_range(7.0, 33.0)
 		create_tree(Vector3(tree_x, 0.0, tree_z), rng)
 
-	# مقاعد الحديقة
 	for z in [12.0, 25.0]:
 		make_box(
 			"ParkBenchSeat",
@@ -302,9 +293,7 @@ func create_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	trunk_mesh.bottom_radius = 0.3
 	trunk_mesh.height = trunk_height
 	trunk.mesh = trunk_mesh
-	trunk.position = pos + Vector3(
-		0.0, trunk_height / 2.0, 0.0
-	)
+	trunk.position = pos + Vector3(0.0, trunk_height / 2.0, 0.0)
 
 	var bark := StandardMaterial3D.new()
 	bark.albedo_color = Color(0.3, 0.16, 0.08)
@@ -319,9 +308,7 @@ func create_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	crown_mesh.height = crown_size * 2.0
 	crown.mesh = crown_mesh
 	crown.position = pos + Vector3(
-		0.0,
-		trunk_height + crown_size * 0.55,
-		0.0
+		0.0, trunk_height + crown_size * 0.55, 0.0
 	)
 	crown.scale = Vector3(1.0, 1.15, 1.0)
 
@@ -362,12 +349,153 @@ func create_street_lights() -> void:
 				)
 
 
+func create_egyptian_village() -> void:
+	# طريق القرية الترابي
+	make_box(
+		"VillageRoad",
+		Vector3(145.0, 0.02, 350.0),
+		Vector3(5.0, 0.12, 300.0),
+		Color("#9b8057"),
+		true
+	)
+
+	# الترعة
+	make_box(
+		"VillageCanal",
+		Vector3(180.0, 0.025, 350.0),
+		Vector3(3.0, 0.05, 300.0),
+		Color("#477f91"),
+		false
+	)
+
+	for bank_x in [177.9, 182.1]:
+		make_box(
+			"CanalBank",
+			Vector3(bank_x, 0.12, 350.0),
+			Vector3(0.7, 0.25, 300.0),
+			Color("#9b8057"),
+			true
+		)
+
+	# البيوت الريفية
+	for house_z in [255.0, 280.0, 305.0, 330.0, 355.0, 380.0]:
+		create_rural_house(Vector3(156.0, 0.0, house_z))
+
+	# الحقول
+	for field_z in [420.0, 465.0]:
+		create_rural_field(Vector3(156.0, 0.0, field_z))
+
+	# النخيل
+	for palm_z in [250.0, 410.0, 485.0]:
+		create_palm_tree(Vector3(174.0, 0.0, palm_z))
+
+
+func create_rural_house(pos: Vector3) -> void:
+	make_box(
+		"RuralHouse",
+		pos + Vector3(0.0, 2.5, 0.0),
+		Vector3(8.0, 5.0, 8.0),
+		Color("#b69b75"),
+		true
+	)
+
+	make_box(
+		"RuralHouseRoof",
+		pos + Vector3(0.0, 5.15, 0.0),
+		Vector3(8.4, 0.3, 8.4),
+		Color("#75644f"),
+		true
+	)
+
+	var front_x: float = pos.x - 4.08
+
+	make_box(
+		"RuralHouseDoor",
+		Vector3(front_x, 1.1, pos.z),
+		Vector3(0.12, 2.2, 1.2),
+		Color("#503a27"),
+		false
+	)
+
+	for window_z in [pos.z - 2.2, pos.z + 2.2]:
+		make_box(
+			"RuralHouseWindow",
+			Vector3(front_x - 0.01, 2.8, window_z),
+			Vector3(0.1, 1.0, 1.0),
+			Color("#476779"),
+			false
+		)
+
+
+func create_rural_field(pos: Vector3) -> void:
+	make_box(
+		"FarmSoil",
+		pos + Vector3(0.0, 0.03, 0.0),
+		Vector3(14.0, 0.06, 25.0),
+		Color("#76583a"),
+		true
+	)
+
+	for i in range(8):
+		var crop_x: float = pos.x - 5.5 + float(i) * 1.55
+
+		make_box(
+			"FarmCropRow",
+			Vector3(crop_x, 0.32, pos.z),
+			Vector3(0.18, 0.5, 21.0),
+			Color("#42723a"),
+			false
+		)
+
+
+func create_palm_tree(pos: Vector3) -> void:
+	var trunk := MeshInstance3D.new()
+	trunk.name = "PalmTrunk"
+
+	var trunk_mesh := CylinderMesh.new()
+	trunk_mesh.top_radius = 0.18
+	trunk_mesh.bottom_radius = 0.3
+	trunk_mesh.height = 4.0
+	trunk.mesh = trunk_mesh
+	trunk.position = pos + Vector3(0.0, 2.0, 0.0)
+
+	var trunk_material := StandardMaterial3D.new()
+	trunk_material.albedo_color = Color("#725032")
+	trunk.material_override = trunk_material
+	add_child(trunk)
+
+	for i in range(7):
+		var angle: float = TAU * float(i) / 7.0
+
+		var leaf := MeshInstance3D.new()
+		leaf.name = "PalmLeaf"
+
+		var leaf_mesh := BoxMesh.new()
+		leaf_mesh.size = Vector3(0.22, 0.12, 2.5)
+		leaf.mesh = leaf_mesh
+		leaf.position = pos + Vector3(0.0, 4.0, 0.0)
+		leaf.rotation.y = angle
+		leaf.rotation.x = -0.35
+
+		var leaf_material := StandardMaterial3D.new()
+		leaf_material.albedo_color = Color("#356b32")
+		leaf.material_override = leaf_material
+		add_child(leaf)
+
+
 func create_player() -> void:
-	var player_instance := PLAYER_SCENE.instantiate()
+	var player_instance: CharacterBody3D = (
+		PLAYER_SCENE.instantiate() as CharacterBody3D
+	)
+
+	if player_instance == null:
+		push_error("مشهد اللاعب لا يحتوي على CharacterBody3D.")
+		return
+
 	player_instance.name = "Player"
 	add_child(player_instance)
 
-	player_reference = player_instance as Node3D
+	player_reference = player_instance
 	player_reference.position = Vector3(0.0, 0.2, 5.0)
 
 	if is_instance_valid(world_manager):
@@ -426,16 +554,16 @@ func create_mobile_controls() -> void:
 	buttons.add_theme_constant_override("separation", 12)
 	canvas.add_child(buttons)
 
-	var jump_button := create_action_button("×")
+	var jump_button := create_action_button("قفز")
 	buttons.add_child(jump_button)
 	jump_button.pressed.connect(_on_jump_pressed)
 
-	var run_button := create_action_button("R2")
+	var run_button := create_action_button("جري")
 	buttons.add_child(run_button)
 	run_button.button_down.connect(_on_run_pressed)
 	run_button.button_up.connect(_on_run_released)
 
-	var interact_button := create_action_button("□")
+	var interact_button := create_action_button("تفاعل")
 	buttons.add_child(interact_button)
 	interact_button.pressed.connect(_on_interact_pressed)
 
@@ -444,7 +572,7 @@ func create_action_button(label_text: String) -> Button:
 	var button := Button.new()
 	button.text = label_text
 	button.custom_minimum_size = Vector2(100.0, 70.0)
-	button.add_theme_font_size_override("font_size", 26)
+	button.add_theme_font_size_override("font_size", 22)
 
 	var normal := StyleBoxFlat.new()
 	normal.bg_color = Color(0.08, 0.08, 0.09, 0.88)
