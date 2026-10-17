@@ -1,127 +1,28 @@
 
-extends Node3D
+[gd_scene load_steps=4 format=3]
 
-var player: CharacterBody3D
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/player_visual.gd" id="2_visual"]
 
-var body: MeshInstance3D
-var head: MeshInstance3D
-var left_arm: MeshInstance3D
-var right_arm: MeshInstance3D
-var left_leg: MeshInstance3D
-var right_leg: MeshInstance3D
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
+radius = 0.35
+height = 1.8
 
-var walk_time: float = 0.0
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1_player")
 
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_player")
 
-func _ready() -> void:
-	player = get_parent() as CharacterBody3D
+[node name="CameraPivot" type="Node3D" parent="."]
+position = Vector3(0, 1.5, 0)
 
-	# ألوان الشخصية
-	var skin = make_material(Color("#bd8056"))
-	var shirt = make_material(Color("#eeeeee"))
-	var pants = make_material(Color("#292d36"))
-	var hair = make_material(Color("#24201d"))
+[node name="Camera3D" type="Camera3D" parent="CameraPivot"]
+position = Vector3(0, 1.5, 5.5)
+rotation_degrees = Vector3(-12, 0, 0)
+current = true
+fov = 70.0
 
-	# الجسم
-	body = make_part(
-		Vector3(0, 1.15, 0),
-		Vector3(0.65, 0.85, 0.35),
-		shirt
-	)
-
-	# الرأس
-	head = make_part(
-		Vector3(0, 1.9, 0),
-		Vector3(0.42, 0.48, 0.42),
-		skin
-	)
-
-	# الشعر
-	make_part(
-		Vector3(0, 2.12, 0),
-		Vector3(0.44, 0.16, 0.44),
-		hair
-	)
-
-	# الذراعان
-	left_arm = make_part(
-		Vector3(-0.43, 1.15, 0),
-		Vector3(0.20, 0.75, 0.22),
-		skin
-	)
-
-	right_arm = make_part(
-		Vector3(0.43, 1.15, 0),
-		Vector3(0.20, 0.75, 0.22),
-		skin
-	)
-
-	# الرجلان
-	left_leg = make_part(
-		Vector3(-0.17, 0.43, 0),
-		Vector3(0.25, 0.78, 0.28),
-		pants
-	)
-
-	right_leg = make_part(
-		Vector3(0.17, 0.43, 0),
-		Vector3(0.25, 0.78, 0.28),
-		pants
-	)
-
-
-func make_material(color: Color) -> StandardMaterial3D:
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	return material
-
-
-func make_part(
-	part_position: Vector3,
-	part_size: Vector3,
-	material: Material
-) -> MeshInstance3D:
-	var part := MeshInstance3D.new()
-	var mesh := BoxMesh.new()
-
-	mesh.size = part_size
-	part.mesh = mesh
-	part.position = part_position
-	part.material_override = material
-
-	add_child(part)
-	return part
-
-
-func _process(delta: float) -> void:
-	if not is_instance_valid(player):
-		return
-
-	var speed := Vector2(
-		player.velocity.x,
-		player.velocity.z
-	).length()
-
-	if speed > 0.2 and player.is_on_floor():
-		walk_time += delta * speed * 2.5
-
-		var swing := sin(walk_time) * 0.55
-
-		left_leg.rotation.x = swing
-		right_leg.rotation.x = -swing
-
-		left_arm.rotation.x = -swing * 0.7
-		right_arm.rotation.x = swing * 0.7
-	else:
-		left_leg.rotation.x = lerp(
-			left_leg.rotation.x, 0.0, delta * 8.0
-		)
-		right_leg.rotation.x = lerp(
-			right_leg.rotation.x, 0.0, delta * 8.0
-		)
-		left_arm.rotation.x = lerp(
-			left_arm.rotation.x, 0.0, delta * 8.0
-		)
-		right_arm.rotation.x = lerp(
-			right_arm.rotation.x, 0.0, delta * 8.0
-		)
+[node name="CharacterVisual" type="Node3D" parent="."]
+script = ExtResource("2_visual")
