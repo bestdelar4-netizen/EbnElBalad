@@ -1,0 +1,33 @@
+
+name: Merge X Bot Animations
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download project files
+        uses: actions/checkout@v4
+
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender
+
+      - name: Merge character and animations
+        run: |
+          mkdir -p build
+          blender --background --python scripts/merge_xbot_animations.py
+
+      - name: Upload animated character
+        uses: actions/upload-artifact@v4
+        with:
+          name: XBot-Animated-GLB
+          path: build/XBot_Animated.glb
+          if-no-files-found: error
