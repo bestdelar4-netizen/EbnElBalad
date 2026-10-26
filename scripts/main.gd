@@ -1010,6 +1010,20 @@ func create_starter_neighborhood() -> void:
 				var phone_x: float = x - 1.35 + float(phone_index) * 0.68
 				make_box("AbuSenDisplayPhone", Vector3(phone_x, 1.25, -9.16), Vector3(0.34, 0.62, 0.07), [Color("#17191c"), Color("#252a31"), Color("#b7b9bd"), Color("#202c3a"), Color("#8d9a9c")][phone_index], false)
 				make_box("AbuSenPhoneScreen", Vector3(phone_x, 1.28, -9.115), Vector3(0.26, 0.47, 0.025), [Color("#4386a8"), Color("#547fa4"), Color("#6d9c9a"), Color("#536b91"), Color("#7da5b7")][phone_index], false)
+			# واجهة مصورة مفصلة للمحل، كخامة على سطح ثلاثي الأبعاد بدل الاعتماد على الصناديق وحدها.
+			var facade := MeshInstance3D.new()
+			facade.name = "AbuSenPhotographicStyleFacade"
+			var facade_mesh := QuadMesh.new()
+			facade_mesh.size = Vector2(8.0, 4.8)
+			facade.mesh = facade_mesh
+			facade.position = Vector3(x, 2.75, -8.94)
+			var facade_material := StandardMaterial3D.new()
+			facade_material.albedo_texture = load("res://assets/textures/abu_sen_mobile_shop.svg")
+			facade_material.roughness = 0.82
+			facade_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+			facade_material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+			facade.material_override = facade_material
+			add_child(facade)
 		else:
 			make_box("StarterShopSign", Vector3(x, 3.15, -9.34), Vector3(4.8, 0.55, 0.16), Color("#185b3d"), false)
 	# توك توك ظاهر من نقطة البداية، وليس بعيدًا في القرية فقط.
