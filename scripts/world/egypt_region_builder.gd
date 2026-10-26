@@ -6,17 +6,27 @@ class_name EgyptRegionBuilder
 var active_root: Node3D
 var active_region_name: String = ""
 
-func build_region(region: Dictionary, origin: Vector3) -> Node3D:
+func build_region(region: Dictionary, origin: Vector3, settlement_name: String = "") -> Node3D:
 	if is_instance_valid(active_root):
 		active_root.queue_free()
 	active_root = Node3D.new()
 	active_root.name = "Region_" + str(region.get("name", "مصر"))
 	add_child(active_root)
 	active_root.position = origin
-	active_region_name = str(region.get("name", "مصر"))
+	active_region_name = settlement_name if not settlement_name.is_empty() else str(region.get("name", "مصر"))
 	var zone := str(region.get("zone", "وادي النيل"))
+	var settlement_type := str(region.get("settlement_type", "مدينة"))
+	if settlement_type == "قرية":
+		ground_color = Color("#71834a") if zone == "دلتا النيل" else Color("#b8a27a")
+	elif settlement_type == "مركز":
+		ground_color = ground_color.lerp(Color("#b7a48a"), 0.25)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = abs(active_region_name.hash())
+	var district_size := 210.0
+	if settlement_type == "قرية":
+		district_size = 135.0
+	elif settlement_type == "مركز":
+		district_size = 175.0
 	var ground_color := Color("#b8a27a")
 	if zone == "دلتا النيل":
 		ground_color = Color("#71834a")
@@ -26,28 +36,28 @@ func build_region(region: Dictionary, origin: Vector3) -> Node3D:
 		ground_color = Color("#c6a06c")
 	elif zone == "قناة السويس":
 		ground_color = Color("#b9b19b")
-	_box("RegionalGround", Vector3(0,-0.55,0), Vector3(210,1,210), ground_color, true)
-	_box("RegionalMainRoad", Vector3(0,0.02,0), Vector3(10,0.12,190), Color("#292929"), true)
-	_box("RegionalCrossRoad", Vector3(0,0.03,0), Vector3(190,0.12,9), Color("#292929"), true)
+	_box("RegionalGround", Vector3(0,-0.55,0), Vector3(district_size,1,district_size), ground_color, true)
+	_box("RegionalMainRoad", Vector3(0,0.02,0), Vector3(10,0.12,district_size - 20.0), Color("#292929"), true)
+	_box("RegionalCrossRoad", Vector3(0,0.03,0), Vector3(district_size - 20.0,0.12,9), Color("#292929"), true)
 	for side in [-1.0, 1.0]:
-		for i in range(7):
+		for i in range(5 if settlement_type == "قرية" else 7):
 			var z := -72.0 + float(i) * 23.0
 			if absf(z) < 12.0:
 				continue
-			_build_house(Vector3(side * 18.0,0,z), rng, zone)
-		for i in range(5):
+			_build_house(Vector3(side * (12.0 if settlement_type == "قرية" else 18.0),0,z), rng, zone)
+		for i in range(4 if settlement_type == "قرية" else 5):
 			var x := -70.0 + float(i) * 35.0
 			if absf(x) < 12.0:
 				continue
-			_build_house(Vector3(x,0,side * 19.0), rng, zone)
+			_build_house(Vector3(x,0,side * (13.0 if settlement_type == "قرية" else 19.0)), rng, zone)
 	# لافتة دخول المحافظة
-	_box("RegionSign", Vector3(0,4,-86), Vector3(15,4,0.7), Color("#15583d"), false)
+	_box("RegionSign", Vector3(0,4,-(district_size * 0.41)), Vector3(15,4,0.7), Color("#15583d"), false)
 	_box("SignPostLeft", Vector3(-6,2,-86), Vector3(0.35,4,0.35), Color("#5e5a50"), false)
 	_box("SignPostRight", Vector3(6,2,-86), Vector3(0.35,4,0.35), Color("#5e5a50"), false)
 	var label := Label3D.new()
 	label.name = "GovernorateName"
-	label.text = active_region_name
-	label.position = Vector3(0,4.2,-85.5)
+	label.text = active_region_name + " - " + settlement_type
+	label.position = Vector3(0,4.2,-(district_size * 0.405))
 	label.font_size = 64
 	label.modulate = Color("#fff4d6")
 	label.outline_size = 8
