@@ -227,11 +227,16 @@ func create_minaret(pos: Vector3) -> void:
 # --------------------------------------------------
 
 func create_environment() -> void:
+	# إضاءة نهارية مصرية دافئة، مع تباين وظلال أوضح دون مؤثرات ثقيلة على الهاتف.
 	var sun := DirectionalLight3D.new()
 	sun.name = "Sun"
-	sun.rotation_degrees = Vector3(-48.0, -30.0, 0.0)
-	sun.light_energy = 1.2
+	sun.rotation_degrees = Vector3(-42.0, -28.0, 0.0)
+	sun.light_color = Color("#fff0d7")
+	sun.light_energy = 1.15
 	sun.shadow_enabled = true
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	sun.shadow_bias = 0.04
+	sun.shadow_normal_bias = 1.2
 	add_child(sun)
 
 	var world_env := WorldEnvironment.new()
@@ -240,16 +245,31 @@ func create_environment() -> void:
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_SKY
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	environment.ambient_light_energy = 0.7
+	environment.ambient_light_energy = 0.55
+	environment.reflected_light_source = Environment.REFLECTION_SOURCE_BG
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	environment.tonemap_exposure = 1.0
+	environment.tonemap_white = 6.0
+	environment.adjustment_enabled = true
+	environment.adjustment_brightness = 1.0
+	environment.adjustment_contrast = 1.08
+	environment.adjustment_saturation = 1.05
+	environment.fog_enabled = true
+	environment.fog_light_color = Color("#d9c9a9")
+	environment.fog_density = 0.0012
+	environment.fog_sky_affect = 0.35
 
 	var sky := Sky.new()
 	var sky_material := ProceduralSkyMaterial.new()
-	sky_material.sky_top_color = Color(0.12, 0.35, 0.68)
-	sky_material.sky_horizon_color = Color(0.65, 0.78, 0.9)
-	sky_material.ground_bottom_color = Color(0.22, 0.2, 0.16)
-	sky_material.ground_horizon_color = Color(0.55, 0.53, 0.45)
+	sky_material.sky_top_color = Color("#32649b")
+	sky_material.sky_horizon_color = Color("#e4c9a0")
+	sky_material.sky_curve = 0.18
+	sky_material.ground_bottom_color = Color("#4c4638")
+	sky_material.ground_horizon_color = Color("#b9a783")
+	sky_material.sun_angle_max = 18.0
+	sky_material.sun_curve = 0.12
 	sky.sky_material = sky_material
+	sky.radiance_size = Sky.RADIANCE_SIZE_128
 
 	environment.sky = sky
 	world_env.environment = environment
