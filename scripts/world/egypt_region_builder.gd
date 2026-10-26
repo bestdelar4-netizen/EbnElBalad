@@ -16,10 +16,6 @@ func build_region(region: Dictionary, origin: Vector3, settlement_name: String =
 	active_region_name = settlement_name if not settlement_name.is_empty() else str(region.get("name", "مصر"))
 	var zone := str(region.get("zone", "وادي النيل"))
 	var settlement_type := str(region.get("settlement_type", "مدينة"))
-	if settlement_type == "قرية":
-		ground_color = Color("#71834a") if zone == "دلتا النيل" else Color("#b8a27a")
-	elif settlement_type == "مركز":
-		ground_color = ground_color.lerp(Color("#b7a48a"), 0.25)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = abs(active_region_name.hash())
 	var district_size := 210.0
@@ -27,7 +23,7 @@ func build_region(region: Dictionary, origin: Vector3, settlement_name: String =
 		district_size = 135.0
 	elif settlement_type == "مركز":
 		district_size = 175.0
-	var ground_color := Color("#b8a27a")
+	var ground_color: Color = Color("#b8a27a")
 	if zone == "دلتا النيل":
 		ground_color = Color("#71834a")
 	elif zone == "الساحل الشمالي" or zone == "الساحل الشمالي والصحراء الغربية" or zone == "البحر الأحمر والصحراء الشرقية":
@@ -36,6 +32,10 @@ func build_region(region: Dictionary, origin: Vector3, settlement_name: String =
 		ground_color = Color("#c6a06c")
 	elif zone == "قناة السويس":
 		ground_color = Color("#b9b19b")
+	if settlement_type == "قرية":
+		ground_color = Color("#71834a") if zone == "دلتا النيل" else Color("#b8a27a")
+	elif settlement_type == "مركز":
+		ground_color = ground_color.lerp(Color("#b7a48a"), 0.25)
 	_box("RegionalGround", Vector3(0,-0.55,0), Vector3(district_size,1,district_size), ground_color, true)
 	_box("RegionalMainRoad", Vector3(0,0.02,0), Vector3(10,0.12,district_size - 20.0), Color("#292929"), true)
 	_box("RegionalCrossRoad", Vector3(0,0.03,0), Vector3(district_size - 20.0,0.12,9), Color("#292929"), true)
