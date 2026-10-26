@@ -39,6 +39,19 @@ func build_region(region: Dictionary, origin: Vector3, settlement_name: String =
 	_box("RegionalGround", Vector3(0,-0.55,0), Vector3(district_size,1,district_size), ground_color, true)
 	_box("RegionalMainRoad", Vector3(0,0.02,0), Vector3(10,0.12,district_size - 20.0), Color("#292929"), true)
 	_box("RegionalCrossRoad", Vector3(0,0.03,0), Vector3(district_size - 20.0,0.12,9), Color("#292929"), true)
+	# أرصفة خرسانية وخطوط طريق متقطعة لقراءة الشارع بشكل أوضح.
+	for side in [-1.0, 1.0]:
+		_box("MainRoadSidewalk", Vector3(side * 6.4, 0.12, 0.0), Vector3(2.2, 0.28, district_size - 20.0), Color("#bcb6a9"), true)
+		_box("CrossRoadSidewalk", Vector3(0.0, 0.13, side * 5.8), Vector3(district_size - 20.0, 0.28, 1.7), Color("#bcb6a9"), true)
+	for mark_index in range(8):
+		var mark_z: float = -district_size * 0.38 + float(mark_index) * district_size * 0.105
+		_box("RoadCenterMarking", Vector3(0.0, 0.095, mark_z), Vector3(0.18, 0.025, 3.0), Color("#e5d8a7"), false)
+	# أعمدة إنارة بسيطة على الأرصفة.
+	for side in [-1.0, 1.0]:
+		for lamp_index in range(4):
+			var lamp_z: float = -district_size * 0.34 + float(lamp_index) * district_size * 0.22
+			_cylinder("StreetLampPole", Vector3(side * 7.1, 2.4, lamp_z), 0.09, 4.8, Color("#444744"))
+			_box("StreetLampHead", Vector3(side * 7.1, 4.85, lamp_z - 0.18), Vector3(0.65, 0.18, 0.38), Color("#d9d2ad"), false)
 	for side in [-1.0, 1.0]:
 		for i in range(5 if settlement_type == "قرية" else 7):
 			var z := -72.0 + float(i) * 23.0
