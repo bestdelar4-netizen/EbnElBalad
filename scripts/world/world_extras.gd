@@ -124,25 +124,15 @@ func create_minimap() -> void:
 
     map_viewport = SubViewport.new()
     map_viewport.size = Vector2i(256, 256)
-    map_viewport.own_world_3d = true
+    map_viewport.own_world_3d = false
     map_viewport.transparent_bg = false
     map_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
     content.add_child(map_viewport)
 
-    # أرضية بسيطة داخل الخريطة حتى تظهر شبكة مرئية
-    var map_ground := MeshInstance3D.new()
-    var ground_mesh := PlaneMesh.new()
-    ground_mesh.size = Vector2(500.0, 500.0)
-    map_ground.mesh = ground_mesh
-
-    var ground_material := StandardMaterial3D.new()
-    ground_material.albedo_color = Color(0.25, 0.36, 0.23)
-    map_ground.material_override = ground_material
-    map_viewport.add_child(map_ground)
-
+    # تستخدم الخريطة عالم اللعبة نفسه حتى تظهر الشوارع والمباني بدل أرضية فارغة.
     map_camera = Camera3D.new()
     map_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-    map_camera.size = 120.0
+    map_camera.size = 180.0
     map_camera.position = Vector3(0.0, 100.0, 0.0)
     map_camera.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
     map_viewport.add_child(map_camera)
@@ -174,7 +164,7 @@ func toggle_map() -> void:
         map_panel.offset_left = -390.0
         map_panel.offset_right = -12.0
         map_panel.offset_bottom = 440.0
-        map_camera.size = 220.0
+        map_camera.size = 320.0
         map_texture.custom_minimum_size = Vector2(350.0, 350.0)
         map_button.text = "تصغير الخريطة"
     else:
