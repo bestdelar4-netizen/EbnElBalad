@@ -196,6 +196,16 @@ func _box(label: String, pos: Vector3, size: Vector3, color: Color, collision: b
 		if asphalt_texture != null:
 			material.albedo_texture = asphalt_texture
 			material.uv1_scale = Vector3(3.0, 3.0, 1.0)
+	elif label == "RegionalGround":
+		var soil_texture: Texture2D = load("res://assets/textures/egypt_dry_ground.svg")
+		if soil_texture != null:
+			material.albedo_texture = soil_texture
+			material.uv1_scale = Vector3(12.0, 12.0, 1.0)
+	elif label == "GreenField":
+		var field_texture: Texture2D = load("res://assets/textures/egypt_dry_ground.svg")
+		if field_texture != null:
+			material.albedo_texture = field_texture
+			material.uv1_scale = Vector3(5.0, 5.0, 1.0)
 	mesh_instance.material_override = material
 	body.add_child(mesh_instance)
 	if collision:
