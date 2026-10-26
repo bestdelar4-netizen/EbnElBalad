@@ -66,23 +66,70 @@ func build_region(region: Dictionary, origin: Vector3, settlement_name: String =
 	return active_root
 
 func _build_house(pos: Vector3, rng: RandomNumberGenerator, zone: String) -> void:
-	var floors := rng.randi_range(1,4)
-	var h := float(floors) * 3.0
-	var wall := Color("#d6c5a5")
+	# واجهات متنوعة مستوحاة من العمارة السكنية المصرية؛ تفاصيل مجسمة بدل صندوق واحد.
+	var floors: int = rng.randi_range(1, 5 if zone == "القاهرة الكبرى" else 4)
+	var width: float = rng.randf_range(7.5, 11.0)
+	var depth: float = rng.randf_range(7.0, 10.0)
+	var floor_height: float = rng.randf_range(2.8, 3.2)
+	var h: float = float(floors) * floor_height
+	var wall: Color = Color("#d6c5a5")
 	if zone == "دلتا النيل":
-		wall = [Color("#d7c6a6"), Color("#b9c49a"), Color("#c9b18c")][rng.randi_range(0,2)]
+		var delta_walls: Array[Color] = [Color("#d7c6a6"), Color("#b9c49a"), Color("#c9b18c"), Color("#c9c3b5")]
+		wall = delta_walls[rng.randi_range(0, delta_walls.size() - 1)]
 	elif zone == "الساحل الشمالي" or zone == "الساحل الشمالي والصحراء الغربية" or zone == "البحر الأحمر والصحراء الشرقية":
-		wall = Color("#e0d5bd")
+		wall = [Color("#e0d5bd"), Color("#f0e7d5"), Color("#cfc4ae")][rng.randi_range(0, 2)]
 	elif zone == "جنوب الصعيد":
-		wall = Color("#d2b18b")
-	_box("House", pos + Vector3(0,h/2,0), Vector3(rng.randf_range(7,10),h,rng.randf_range(7,10)), wall, true)
-	_box("FrontDoor", pos + Vector3(0,1.0,-4.2), Vector3(1.2,2,0.12), Color("#493124"), false)
+		wall = [Color("#d2b18b"), Color("#c69d70"), Color("#e0c39a")][rng.randi_range(0, 2)]
+	# جسم المبنى وحافة السطح.
+	_box("EgyptianBuilding", pos + Vector3(0.0, h * 0.5, 0.0), Vector3(width, h, depth), wall, true)
+	_box("RoofParapet", pos + Vector3(0.0, h + 0.18, 0.0), Vector3(width + 0.25, 0.36, depth + 0.25), wall.darkened(0.08), false)
+	# واجهة أمامية: باب، إطار حجري، وشبابيك بإطارات واضحة.
+	var front_z: float = -depth * 0.5 - 0.08
+	var door_x: float = -width * 0.22
+	_box("FrontDoor", pos + Vector3(door_x, 1.05, front_z), Vector3(1.25, 2.1, 0.16), Color("#503326"), false)
+	_box("DoorLintel", pos + Vector3(door_x, 2.16, front_z - 0.02), Vector3(1.55, 0.16, 0.22), Color("#e8d9bd"), false)
+	var window_columns: int = 2 if width < 9.5 else 3
 	for floor_no in range(floors):
-		for window_no in [-1.0,1.0]:
-			_box("Window", pos + Vector3(window_no*2.0,1.7+float(floor_no)*3.0,-4.25), Vector3(1.15,1.1,0.12), Color("#587e91"), false)
-	_box("RoofTank", pos + Vector3(1.5,h+0.7,1), Vector3(1.5,1.4,1.5), Color("#777b7b"), false)
-	if rng.randf() > 0.55:
-		_box("Balcony", pos + Vector3(0,3.0,-4.8), Vector3(3.5,0.15,1.0), Color("#8e8170"), false)
+		var y: float = 1.15 + float(floor_no) * floor_height
+		for window_no in range(window_columns):
+			var x: float = -width * 0.5 + width * float(window_no + 1) / float(window_columns + 1)
+			if absf(x - door_x) < 1.0 and floor_no == 0:
+				continue
+			var window_w: float = rng.randf_range(0.95, 1.25)
+			_box("WindowRecess", pos + Vector3(x, y, front_z - 0.025), Vector3(window_w + 0.24, 1.28, 0.12), Color("#e9dfcc"), false)
+			_box("WindowGlass", pos + Vector3(x, y, front_z - 0.105), Vector3(window_w, 1.02, 0.08), Color("#426579"), false)
+			_box("WindowSill", pos + Vector3(x, y - 0.61, front_z - 0.16), Vector3(window_w + 0.28, 0.12, 0.28), Color("#a79a83"), false)
+			# فاصل رأسي يوحي بمصراعين زجاجيين.
+			_box("WindowMullion", pos + Vector3(x, y, front_z - 0.155), Vector3(0.055, 1.02, 0.045), Color("#c5c0b5"), false)
+		# بلكونة متقطعة على بعض الطوابق مع أرضية ودرابزين وأعمدة.
+		if floor_no > 0 and rng.randf() > 0.38:
+			var balcony_y: float = float(floor_no) * floor_height + 0.28
+			var balcony_w: float = rng.randf_range(2.2, 3.6)
+			var balcony_x: float = rng.randf_range(-width * 0.2, width * 0.2)
+			_box("BalconySlab", pos + Vector3(balcony_x, balcony_y, front_z - 0.65), Vector3(balcony_w, 0.18, 1.15), Color("#a99b84"), false)
+			_box("BalconyRailTop", pos + Vector3(balcony_x, balcony_y + 0.92, front_z - 1.15), Vector3(balcony_w, 0.10, 0.10), Color("#4a4c4b"), false)
+			_box("BalconyRailBottom", pos + Vector3(balcony_x, balcony_y + 0.18, front_z - 1.15), Vector3(balcony_w, 0.08, 0.10), Color("#4a4c4b"), false)
+			for rail_i in range(5):
+				var rail_x: float = balcony_x - balcony_w * 0.5 + balcony_w * float(rail_i) / 4.0
+				_box("BalconyRail", pos + Vector3(rail_x, balcony_y + 0.53, front_z - 1.15), Vector3(0.055, 0.7, 0.07), Color("#4a4c4b"), false)
+	# وحدة تكييف خارجية عشوائية، من التفاصيل الشائعة في الشوارع المصرية.
+	if rng.randf() > 0.25:
+		var ac_x: float = width * 0.32
+		var ac_y: float = rng.randf_range(2.2, maxf(2.3, h - 0.8))
+		_box("AirConditioner", pos + Vector3(ac_x, ac_y, front_z - 0.18), Vector3(0.85, 0.48, 0.42), Color("#deded7"), false)
+		_box("ACVent", pos + Vector3(ac_x, ac_y, front_z - 0.405), Vector3(0.52, 0.24, 0.04), Color("#777b7b"), false)
+	# خزانات مياه ومواسير على السطح.
+	_box("RoofWaterTank", pos + Vector3(width * 0.25, h + 0.95, depth * 0.18), Vector3(1.25, 1.6, 1.25), Color("#777d7b"), false)
+	_cylinder("RoofPipe", pos + Vector3(-width * 0.3, h + 0.55, depth * 0.2), 0.08, 1.1, Color("#77746b"))
+	# بعض المباني بها محل أرضي ومظلة ملونة على الشارع.
+	if rng.randf() > 0.58:
+		var shop_color: Color = [Color("#d8b66a"), Color("#b84e35"), Color("#347b76"), Color("#d9d0b9")][rng.randi_range(0, 3)]
+		_box("ShopFront", pos + Vector3(width * 0.22, 1.25, front_z - 0.12), Vector3(width * 0.42, 1.75, 0.16), Color("#354c53"), false)
+		_box("ShopAwning", pos + Vector3(width * 0.22, 2.25, front_z - 0.55), Vector3(width * 0.52, 0.18, 1.0), shop_color, false)
+		_box("ShopSignboard", pos + Vector3(width * 0.22, 2.8, front_z - 0.14), Vector3(width * 0.55, 0.48, 0.14), Color("#15583d"), false)
+	# شرفة السطح والهوائي.
+	if rng.randf() > 0.45:
+		_cylinder("RoofAntenna", pos + Vector3(-width * 0.32, h + 1.5, -depth * 0.2), 0.035, 2.4, Color("#5a5b58"))
 
 func _add_local_features(zone: String, rng: RandomNumberGenerator) -> void:
 	if zone == "دلتا النيل":
