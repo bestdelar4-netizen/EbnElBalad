@@ -974,6 +974,21 @@ func create_tuk_tuk(pos: Vector3) -> void:
 	tuk.add_child(front_wheel)
 
 
+func create_shop_sign_text(sign_text: String, sign_position: Vector3) -> void:
+	var label := Label3D.new()
+	label.name = "AbuSenShopName"
+	label.text = sign_text
+	label.position = sign_position
+	label.font_size = 64
+	label.pixel_size = 0.012
+	label.modulate = Color("#fff1c8")
+	label.outline_size = 10
+	label.outline_modulate = Color("#10251b")
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(label)
+
+
 # --------------------------------------------------
 # حي البداية: مشهد واضح حول نقطة ظهور اللاعب
 # --------------------------------------------------
@@ -986,7 +1001,11 @@ func create_starter_neighborhood() -> void:
 		make_box("StarterShopBuilding", Vector3(x, 3.2, -13.0), Vector3(8.5, 6.4, 7.0), wall, true)
 		make_box("StarterShopFront", Vector3(x, 1.25, -9.38), Vector3(3.0, 2.25, 0.12), Color("#334b50"), false)
 		make_box("StarterShopAwning", Vector3(x, 2.55, -9.8), Vector3(4.2, 0.25, 1.0), [Color("#b93f32"), Color("#e2c24c"), Color("#28754a"), Color("#e7e0d1")][i], false)
-		make_box("StarterShopSign", Vector3(x, 3.15, -9.34), Vector3(4.8, 0.55, 0.16), Color("#185b3d"), false)
+		if i == 0:
+			make_box("AbuSenSignBoard", Vector3(x, 3.15, -9.34), Vector3(4.8, 0.75, 0.18), Color("#153f2c"), false)
+			create_shop_sign_text("أبو سن", Vector3(x, 3.15, -9.20))
+		else:
+			make_box("StarterShopSign", Vector3(x, 3.15, -9.34), Vector3(4.8, 0.55, 0.16), Color("#185b3d"), false)
 	# توك توك ظاهر من نقطة البداية، وليس بعيدًا في القرية فقط.
 	create_tuk_tuk(Vector3(8.0, 0.0, 16.0))
 	# أشخاص ثابتون كبداية مرئية في الشارع، بملابس مختلفة.
