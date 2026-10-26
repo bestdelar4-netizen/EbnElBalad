@@ -289,12 +289,41 @@ func create_world_manager() -> void:
 
 
 func create_world() -> void:
+	# أنشئ أرضًا وشارعًا ومباني واضحة حول نقطة البداية أولًا.
 	create_ground()
 	create_roads()
 	create_buildings()
 	create_park()
 	create_street_lights()
+	create_spawn_street()
 
+
+
+func create_spawn_street() -> void:
+	# شارع البداية قريب جدًا من الكاميرا حتى لا يبدأ اللاعب في مساحة تبدو فارغة.
+	make_box("SpawnStreetRoad", Vector3(0.0, 0.035, -4.0), Vector3(20.0, 0.12, 46.0), Color("#292a2b"), true)
+	make_box("SpawnSidewalkLeft", Vector3(-12.0, 0.12, -4.0), Vector3(4.0, 0.24, 46.0), Color("#bdb5a5"), true)
+	make_box("SpawnSidewalkRight", Vector3(12.0, 0.12, -4.0), Vector3(4.0, 0.24, 46.0), Color("#bdb5a5"), true)
+	for z in range(-24, 18, 8):
+		make_box("SpawnRoadMarking", Vector3(0.0, 0.105, float(z)), Vector3(0.22, 0.025, 3.0), Color("#f0dfaa"), false)
+	# صف مبانٍ قصيرة وكبيرة بصريًا على جانبي شارع البداية.
+	for side in [-1.0, 1.0]:
+		for i in range(3):
+			var z: float = -17.0 + float(i) * 13.0
+			var x: float = side * 17.0
+			var height: float = 8.0 + float((i + int(side + 1.0)) % 3) * 2.0
+			var wall_color: Color = [Color("#d8c5a4"), Color("#c7b18e"), Color("#e0d3b8")][i]
+			make_box("SpawnStreetBuilding", Vector3(x, height * 0.5, z), Vector3(10.0, height, 9.0), wall_color, true)
+			var front_x: float = x - side * 5.08
+			make_box("SpawnStreetShopfront", Vector3(front_x, 1.25, z), Vector3(0.12, 2.25, 3.2), Color("#274754"), false)
+			make_box("SpawnStreetShopAwning", Vector3(front_x - side * 0.18, 2.55, z), Vector3(0.6, 0.22, 4.0), [Color("#b84a36"), Color("#d5b34e"), Color("#28744a")][i], false)
+			for floor_y in range(4, int(height), 3):
+				for window_side in [-1.0, 1.0]:
+					make_box("SpawnStreetWindow", Vector3(front_x, float(floor_y), z + window_side * 2.3), Vector3(0.12, 1.1, 1.15), Color("#456b7c"), false)
+	# علامة إنارة قريبة توضح اتجاه الشارع.
+	for side in [-1.0, 1.0]:
+		make_box("SpawnLampPole", Vector3(side * 10.0, 2.6, -2.0), Vector3(0.16, 5.2, 0.16), Color("#41413d"), false)
+		make_box("SpawnLampHead", Vector3(side * 10.0, 5.15, -2.0), Vector3(0.8, 0.2, 0.35), Color("#f0dca8"), false)
 
 func create_ground() -> void:
 	make_box(
