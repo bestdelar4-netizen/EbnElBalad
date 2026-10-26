@@ -1160,7 +1160,7 @@ func travel_to_region(region: Dictionary) -> void:
 		region_builder.name = "EgyptRegionBuilder"
 		region_builder.set_script(EGYPT_REGION_BUILDER_SCRIPT)
 		add_child(region_builder)
-	var destination := Vector3(0.0, 0.5, 0.0)
+	var destination := Vector3(500.0, 0.5, 500.0)
 	region_builder.call("build_region", region, destination)
 	if is_instance_valid(player_reference):
 		player_reference.global_position = destination + Vector3(0.0, 0.5, 0.0)
