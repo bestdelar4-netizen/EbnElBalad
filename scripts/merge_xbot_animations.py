@@ -1,135 +1,92 @@
-
 import bpy
-import os
 from pathlib import Path
 
 ROOT = Path.cwd()
 OUTPUT = ROOT / "build" / "XBot_Animated.glb"
 
-# Search the repository for the character and animation files.
-fbx_files = list(ROOT.rglob("*.fbx"))
-
-character_files = [
-    f for f in fbx_files
-    if f.name.lower() == "x bot.fbx"
-]
-
-if not character_files:
-    raise RuntimeError("Could not find X Bot.fbx in the repository")
-
-character_file = character_files[0]
-
-animation_files = [
-    f for f in fbx_files
-    if f.resolve() != character_file.resolve()
-]
-
+fbx_files = sorted(ROOT.rglob("*.fbx"))
+characters = [p for p in fbx_files if p.name.lower() == "x bot.fbx"]
+if not characters:
+    raise RuntimeError("Could not find X Bot.fbx in the repository.")
+character_file = characters[0]
+animation_files = [p for p in fbx_files if p.resolve() != character_file.resolve()]
 if not animation_files:
-    raise RuntimeError("No animation FBX files were found")
+    raise RuntimeError("No animation FBX files found.")
 
-# Start with an empty Blender scene.
 bpy.ops.object.select_all(action="SELECT")
 bpy.ops.object.delete(use_global=False)
-
 for action in list(bpy.data.actions):
     bpy.data.actions.remove(action)
 
-# Import the character.
 bpy.ops.import_scene.fbx(filepath=str(character_file))
-
-armatures = [
-    obj for obj in bpy.context.scene.objects
-    if obj.type == "ARMATURE"
-]
-
-if not armatures:
-    raise RuntimeError("X Bot has no imported armature")
-
-main_rig = armatures[0]
-main_bones = set(main_rig.data.bones.keys())
-
-# Keep the original character objects.
 character_objects = list(bpy.context.scene.objects)
+rigs = [obj for obj in character_objects if obj.type == "ARMATURE"]
+if not rigs:
+    raise RuntimeError("X Bot import did not contain an armature.")
+main_rig = rigs[0]
+main_bones = set(main_rig.data.bones.keys())
+if not main_bones:
+    raise RuntimeError("X Bot armature has no bones.")
 
-merged_actions = []
-
-for fbx in sorted(animation_files):
-    bpy.ops.object.select_all(action="DESELECT")
-
+usable_actions = []
+used_names = set()
+for fbx in animation_files:
+    objects_before = set(bpy.context.scene.objects)
+    actions_before = set(bpy.data.actions)
     try:
         bpy.ops.import_scene.fbx(filepath=str(fbx))
     except Exception as exc:
-        print(f"SKIPPED {fbx.name}: {exc}")
+        print(f"SKIP {fbx.name}: import error: {exc}")
         continue
 
-    imported_objects = [
-        obj for obj in bpy.context.scene.objects
-        if obj not in character_objects
-    ]
+    new_objects = [o for o in bpy.context.scene.objects if o not in objects_before]
+    new_rigs = [o for o in new_objects if o.type == "ARMATURE"]
+    new_actions = [a for a in bpy.data.actions if a not in actions_before]
+    compatible = False
+    for rig in new_rigs:
+        common = main_bones.intersection(set(rig.data.bones.keys()))
+        if len(common) >= max(1, int(len(main_bones) * 0.70)):
+            compatible = True
+            break
 
-    imported_rigs = [
-        obj for obj in imported_objects
-        if obj.type == "ARMATURE"
-    ]
+    if compatible:
+        for action in new_actions:
+            if len(action.fcurves) == 0:
+                continue
+            base = fbx.stem
+            name = base
+            suffix = 2
+            while name in used_names:
+                name = f"{base}_{suffix}"
+                suffix += 1
+            action.name = name
+            used_names.add(name)
+            usable_actions.append(action)
+        print(f"IMPORTED {fbx.name}")
+    else:
+        print(f"SKIP {fbx.name}: no compatible armature")
+        for action in new_actions:
+            if action.users == 0:
+                bpy.data.actions.remove(action)
 
-    imported_actions = [
-        action for action in bpy.data.actions
-        if action.users == 1
-        and action.name not in merged_actions
-    ]
-
-    for rig in imported_rigs:
-        rig_bones = set(rig.data.bones.keys())
-
-        if not (main_bones & rig_bones):
-            print(f"SKIPPED incompatible skeleton: {fbx.name}")
-            continue
-
-        if len(main_bones & rig_bones) < len(main_bones) * 0.7:
-            print(f"SKIPPED mismatched bones: {fbx.name}")
-            continue
-
-        for action in imported_actions:
-            if not action.name in merged_actions:
-                merged_actions.append(action.name)
-
-    # Remove temporary imported objects, not their actions.
     bpy.ops.object.select_all(action="DESELECT")
-    for obj in imported_objects:
+    for obj in new_objects:
         if obj.name in bpy.data.objects:
             obj.select_set(True)
-
     bpy.ops.object.delete()
 
-# Keep only actions that contain animation curves.
-valid_actions = [
-    action for action in bpy.data.actions
-    if len(action.fcurves) > 0
-]
+if not usable_actions:
+    raise RuntimeError("No compatible animation clips found for X Bot.")
 
-if not valid_actions:
-    raise RuntimeError("No usable animation actions were imported")
-
-# Assign animation actions to the original rig.
 main_rig.animation_data_create()
-
-for action in valid_actions:
-    main_rig.animation_data.action = action
-    if hasattr(main_rig.animation_data, "action_slot"):
-        slots = getattr(action, "slots", None)
-        if slots and len(slots) > 0:
-            main_rig.animation_data.action_slot = slots[0]
-
-# Select the character and export all actions.
+main_rig.animation_data.action = usable_actions[0]
 bpy.ops.object.select_all(action="DESELECT")
-
 for obj in character_objects:
     if obj.name in bpy.data.objects:
         obj.select_set(True)
-
 bpy.context.view_layer.objects.active = main_rig
-OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 
+OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 result = bpy.ops.export_scene.gltf(
     filepath=str(OUTPUT),
     export_format="GLB",
@@ -137,9 +94,8 @@ result = bpy.ops.export_scene.gltf(
     export_animations=True,
     export_animation_mode="ACTIONS",
 )
-
 if "FINISHED" not in result or not OUTPUT.exists():
-    raise RuntimeError("GLB export failed")
-
-print(f"Exported character: {OUTPUT}")
-print(f"Imported actions: {len(valid_actions)}")
+    raise RuntimeError("GLB export failed.")
+print(f"SUCCESS: {OUTPUT}")
+print(f"Compatible animation clips: {len(usable_actions)}")
+print("Clips: " + ", ".join(a.name for a in usable_actions))
