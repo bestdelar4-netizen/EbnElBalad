@@ -17,6 +17,8 @@ var region_builder: Node3D
 
 
 func _ready() -> void:
+	# ارسم مشهد اختبار مرئي أولًا، قبل أي أنظمة إضافية قد تتعطل.
+	create_emergency_visible_world()
 	create_environment()
 	create_world_manager()
 	create_world()
@@ -27,6 +29,30 @@ func _ready() -> void:
 	create_world_extras()
 	create_world_life()
 	create_starter_neighborhood()
+
+
+func create_emergency_visible_world() -> void:
+	# أرض كبيرة بلون واضح حول نقطة البداية.
+	make_box("EmergencyGround", Vector3(0.0, -0.65, -8.0), Vector3(90.0, 0.3, 120.0), Color("#b9a47d"), false)
+	# طريق واضح تحت اللاعب وأمامه.
+	make_box("EmergencyRoad", Vector3(0.0, -0.42, -10.0), Vector3(12.0, 0.12, 100.0), Color("#333438"), false)
+	for z in range(-48, 36, 8):
+		make_box("EmergencyRoadStripe", Vector3(0.0, -0.345, float(z)), Vector3(0.22, 0.025, 3.0), Color("#f7e7b5"), false)
+	# مبانٍ ضخمة قريبة في الاتجاهين، وواجهة مباشرة أمام اللاعب.
+	make_box("EmergencyBuildingLeft", Vector3(-11.0, 4.0, -12.0), Vector3(9.0, 8.0, 8.0), Color("#dfc9a4"), false)
+	make_box("EmergencyBuildingRight", Vector3(11.0, 5.0, -18.0), Vector3(9.0, 10.0, 8.0), Color("#c9b18d"), false)
+	make_box("EmergencyBuildingFar", Vector3(0.0, 5.0, -32.0), Vector3(18.0, 10.0, 5.0), Color("#e5d6b9"), false)
+	make_box("EmergencyShopSign", Vector3(0.0, 4.0, -29.35), Vector3(8.0, 0.8, 0.15), Color("#17613d"), false)
+	create_shop_sign_text("شارع ابن البلد", Vector3(0.0, 4.0, -29.2))
+	# تأكد من وجود كاميرا فعالة حتى لو كانت الكاميرا الأصلية غير محددة.
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		var emergency_camera := Camera3D.new()
+		emergency_camera.name = "EmergencyCamera"
+		emergency_camera.position = Vector3(0.0, 5.0, 14.0)
+		emergency_camera.rotation_degrees = Vector3(-10.0, 0.0, 0.0)
+		emergency_camera.current = true
+		add_child(emergency_camera)
 
 
 
