@@ -28,8 +28,11 @@ var mission_names: Array[String] = [
 var mission_rewards: Array[int] = [100, 150, 200]
 
 
+const SAVE_PATH: String = "user://ebnelbalad_save.cfg"
+
 func _ready() -> void:
     name = "WorldLife"
+    load_game()
     create_cars()
     create_npcs()
     create_mission_markers()
@@ -39,7 +42,36 @@ func _ready() -> void:
 
 func set_player(target: Node3D) -> void:
     player = target
+    if is_instance_valid(player):
+        var config := ConfigFile.new()
+        if config.load(SAVE_PATH) == OK:
+            var saved_position: Vector3 = config.get_value("player", "position", player.global_position)
+            player.global_position = saved_position
     update_hud()
+
+
+func load_game() -> void:
+    var config := ConfigFile.new()
+    if config.load(SAVE_PATH) != OK:
+        return
+    money = int(config.get_value("progress", "money", 250))
+    mission_index = clampi(int(config.get_value("progress", "mission_index", 0)), 0, mission_positions.size())
+
+
+func save_game() -> void:
+    var config := ConfigFile.new()
+    config.set_value("progress", "money", money)
+    config.set_value("progress", "mission_index", mission_index)
+    if is_instance_valid(player):
+        config.set_value("player", "position", player.global_position)
+    var error: Error = config.save(SAVE_PATH)
+    if error != OK:
+        push_warning("تعذر حفظ التقدم: %s" % error)
+
+
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
+        save_game()
 
 
 func create_cars() -> void:
@@ -258,6 +290,7 @@ func handle_interaction() -> void:
 
             status_label.text = "أحسنت! استلمت مكافأة %d جنيه." % reward
             mission_index += 1
+            save_game()
 
             update_mission_markers()
             update_hud()
