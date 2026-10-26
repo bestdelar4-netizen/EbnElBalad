@@ -16,6 +16,7 @@ const INPUT_DEADZONE: float = 0.12
 var joystick: Control = null
 var running: bool = false
 var jump_requested: bool = false
+var move_direction: Vector3 = Vector3.ZERO
 
 
 func _ready() -> void:
@@ -75,20 +76,20 @@ func _physics_process(delta: float) -> void:
 		)
 
 		if direction.length_squared() > 0.001:
-			direction = direction.normalized()
+			move_direction = direction.normalized()
 			var speed: float = RUN_SPEED if running else WALK_SPEED
-			velocity.x = direction.x * speed
-			velocity.z = direction.z * speed
+			velocity.x = move_toward(velocity.x, move_direction.x * speed, 24.0 * delta)
+			velocity.z = move_toward(velocity.z, move_direction.z * speed, 24.0 * delta)
+			var target_angle: float = atan2(move_direction.x, move_direction.z)
+			rotation.y = lerp_angle(rotation.y, target_angle, minf(1.0, 10.0 * delta))
 		else:
-			velocity.x = move_toward(
-				velocity.x, 0.0, WALK_SPEED * 2.0 * delta
-			)
-			velocity.z = move_toward(
-				velocity.z, 0.0, WALK_SPEED * 2.0 * delta
-			)
+			move_direction = Vector3.ZERO
+			velocity.x = move_toward(velocity.x, 0.0, 18.0 * delta)
+			velocity.z = move_toward(velocity.z, 0.0, 18.0 * delta)
 	else:
-		velocity.x = 0.0
-		velocity.z = 0.0
+		move_direction = Vector3.ZERO
+		velocity.x = move_toward(velocity.x, 0.0, 18.0 * delta)
+		velocity.z = move_toward(velocity.z, 0.0, 18.0 * delta)
 
 	var wants_to_jump: bool = (
 		jump_requested or Input.is_action_just_pressed("ui_accept")
