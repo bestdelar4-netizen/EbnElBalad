@@ -184,6 +184,18 @@ func _box(label: String, pos: Vector3, size: Vector3, color: Color, collision: b
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
 	material.roughness = 0.95
+	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	# سطح خشن للطرق ودهان محارة مصري متآكل للواجهات؛ ألوان المجسمات تظل مؤثرة في النتيجة.
+	if label == "EgyptianBuilding":
+		var plaster_texture: Texture2D = load("res://assets/textures/egypt_plaster.svg")
+		if plaster_texture != null:
+			material.albedo_texture = plaster_texture
+			material.uv1_scale = Vector3(2.0, 2.0, 1.0)
+	elif label == "RegionalMainRoad" or label == "RegionalCrossRoad":
+		var asphalt_texture: Texture2D = load("res://assets/textures/asphalt.svg")
+		if asphalt_texture != null:
+			material.albedo_texture = asphalt_texture
+			material.uv1_scale = Vector3(3.0, 3.0, 1.0)
 	mesh_instance.material_override = material
 	body.add_child(mesh_instance)
 	if collision:
