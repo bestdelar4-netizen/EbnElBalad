@@ -300,30 +300,37 @@ func create_world() -> void:
 
 
 func create_spawn_street() -> void:
-	# شارع البداية قريب جدًا من الكاميرا حتى لا يبدأ اللاعب في مساحة تبدو فارغة.
-	make_box("SpawnStreetRoad", Vector3(0.0, 0.035, -4.0), Vector3(20.0, 0.12, 46.0), Color("#292a2b"), true)
-	make_box("SpawnSidewalkLeft", Vector3(-12.0, 0.12, -4.0), Vector3(4.0, 0.24, 46.0), Color("#bdb5a5"), true)
-	make_box("SpawnSidewalkRight", Vector3(12.0, 0.12, -4.0), Vector3(4.0, 0.24, 46.0), Color("#bdb5a5"), true)
-	for z in range(-24, 18, 8):
-		make_box("SpawnRoadMarking", Vector3(0.0, 0.105, float(z)), Vector3(0.22, 0.025, 3.0), Color("#f0dfaa"), false)
-	# صف مبانٍ قصيرة وكبيرة بصريًا على جانبي شارع البداية.
+	# عناصر ضخمة وقريبة جدًا من الكاميرا لضمان ظهور الشارع والمباني من أول لحظة.
+	make_box("SpawnStreetRoad", Vector3(0.0, 0.035, -3.0), Vector3(14.0, 0.12, 52.0), Color("#292a2b"), true)
+	make_box("SpawnSidewalkLeft", Vector3(-10.0, 0.12, -3.0), Vector3(3.0, 0.24, 52.0), Color("#bdb5a5"), true)
+	make_box("SpawnSidewalkRight", Vector3(10.0, 0.12, -3.0), Vector3(3.0, 0.24, 52.0), Color("#bdb5a5"), true)
+	for z in range(-27, 22, 7):
+		make_box("SpawnRoadMarking", Vector3(0.0, 0.105, float(z)), Vector3(0.22, 0.025, 2.8), Color("#f0dfaa"), false)
+
+	# واجهات مبانٍ بمحاذاة مجال رؤية الكاميرا، على مسافة قصيرة من اللاعب.
 	for side in [-1.0, 1.0]:
-		for i in range(3):
-			var z: float = -17.0 + float(i) * 13.0
-			var x: float = side * 17.0
-			var height: float = 8.0 + float((i + int(side + 1.0)) % 3) * 2.0
-			var wall_color: Color = [Color("#d8c5a4"), Color("#c7b18e"), Color("#e0d3b8")][i]
-			make_box("SpawnStreetBuilding", Vector3(x, height * 0.5, z), Vector3(10.0, height, 9.0), wall_color, true)
-			var front_x: float = x - side * 5.08
-			make_box("SpawnStreetShopfront", Vector3(front_x, 1.25, z), Vector3(0.12, 2.25, 3.2), Color("#274754"), false)
-			make_box("SpawnStreetShopAwning", Vector3(front_x - side * 0.18, 2.55, z), Vector3(0.6, 0.22, 4.0), [Color("#b84a36"), Color("#d5b34e"), Color("#28744a")][i], false)
+		for i in range(4):
+			var z: float = -18.0 + float(i) * 12.0
+			var x: float = side * 10.5
+			var height: float = 9.0 + float(i % 3) * 2.0
+			var wall_colors: Array[Color] = [Color("#d8c5a4"), Color("#c7b18e"), Color("#e0d3b8"), Color("#c4b8a1")]
+			var wall_color: Color = wall_colors[i]
+			make_box("SpawnStreetBuilding", Vector3(x, height * 0.5, z), Vector3(7.0, height, 9.0), wall_color, true)
+			var front_x: float = x - side * 3.56
+			make_box("SpawnStreetShopfront", Vector3(front_x, 1.3, z), Vector3(0.12, 2.4, 3.5), Color("#274754"), false)
+			make_box("SpawnStreetShopAwning", Vector3(front_x - side * 0.16, 2.65, z), Vector3(0.55, 0.22, 4.2), [Color("#b84a36"), Color("#d5b34e"), Color("#28744a"), Color("#a8a49a")][i], false)
+			make_box("SpawnStreetSign", Vector3(front_x - side * 0.02, 3.35, z), Vector3(0.14, 0.48, 3.6), Color("#185b3d"), false)
 			for floor_y in range(4, int(height), 3):
 				for window_side in [-1.0, 1.0]:
-					make_box("SpawnStreetWindow", Vector3(front_x, float(floor_y), z + window_side * 2.3), Vector3(0.12, 1.1, 1.15), Color("#456b7c"), false)
-	# علامة إنارة قريبة توضح اتجاه الشارع.
+					make_box("SpawnStreetWindow", Vector3(front_x, float(floor_y), z + window_side * 2.25), Vector3(0.12, 1.1, 1.1), Color("#456b7c"), false)
+
+	# أعمدة إنارة واضحة على جانبي الطريق.
 	for side in [-1.0, 1.0]:
-		make_box("SpawnLampPole", Vector3(side * 10.0, 2.6, -2.0), Vector3(0.16, 5.2, 0.16), Color("#41413d"), false)
-		make_box("SpawnLampHead", Vector3(side * 10.0, 5.15, -2.0), Vector3(0.8, 0.2, 0.35), Color("#f0dca8"), false)
+		make_box("SpawnLampPole", Vector3(side * 8.5, 2.6, -2.0), Vector3(0.16, 5.2, 0.16), Color("#41413d"), false)
+		make_box("SpawnLampHead", Vector3(side * 8.5, 5.15, -2.0), Vector3(0.8, 0.2, 0.35), Color("#f0dca8"), false)
+
+	# حاجز بصري بسيط في نهاية الشارع يوضح عمق المشهد حتى من دون تحريك اللاعب.
+	make_box("SpawnFarBuilding", Vector3(0.0, 5.0, -34.0), Vector3(18.0, 10.0, 4.0), Color("#cbb99a"), true)
 
 func create_ground() -> void:
 	make_box(
