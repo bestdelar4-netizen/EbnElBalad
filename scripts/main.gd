@@ -794,7 +794,14 @@ func create_mobile_controls() -> void:
 	joystick.name = "VirtualJoystick"
 	joystick.set_script(JOYSTICK_SCRIPT)
 	joystick.add_to_group("virtual_joystick")
-	joystick.position = Vector2(35.0, 430.0)
+	joystick.anchor_left = 0.0
+	joystick.anchor_top = 1.0
+	joystick.anchor_right = 0.0
+	joystick.anchor_bottom = 1.0
+	joystick.offset_left = 24.0
+	joystick.offset_top = -190.0
+	joystick.offset_right = 174.0
+	joystick.offset_bottom = -40.0
 	joystick.custom_minimum_size = Vector2(150.0, 150.0)
 	canvas.add_child(joystick)
 
