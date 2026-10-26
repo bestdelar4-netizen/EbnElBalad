@@ -1178,6 +1178,15 @@ func create_region_menu(canvas: CanvasLayer) -> void:
 				village_button.text = "قرية من " + place_name
 				village_button.custom_minimum_size = Vector2(170.0, 38.0)
 				village_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				var center_button := Button.new()
+				center_button.text = "مركز: " + place_name
+				center_button.custom_minimum_size = Vector2(170.0, 38.0)
+				center_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				places_box.add_child(center_button)
+				center_button.pressed.connect(func():
+					selected_place = "مركز " + place_name
+					details.text = str(item.get("name", "")) + "\\nالمركز المختار: " + place_name + "\\nسيتم توليد نموذج مركز مستقل."
+				)
 				places_box.add_child(village_button)
 				village_button.pressed.connect(func():
 					selected_place = "قرية " + place_name
