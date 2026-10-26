@@ -426,6 +426,24 @@ func create_building(
 	)
 
 
+
+func add_rooftop_detail(building_pos: Vector3, building_height: float) -> void:
+	var tank := MeshInstance3D.new()
+	tank.name = "RooftopWaterTank"
+	var tank_mesh := CylinderMesh.new()
+	tank_mesh.top_radius = 0.65
+	tank_mesh.bottom_radius = 0.65
+	tank_mesh.height = 1.35
+	tank.mesh = tank_mesh
+	tank.position = building_pos + Vector3(0.0, building_height + 0.85, 0.0)
+	var tank_material := StandardMaterial3D.new()
+	tank_material.albedo_color = Color("#777c7b")
+	tank_material.roughness = 0.95
+	tank.material_override = tank_material
+	add_child(tank)
+
+
+
 # --------------------------------------------------
 # الحديقة والأشجار
 # --------------------------------------------------
