@@ -1,4 +1,3 @@
-
 name: Merge X Bot Animations
 
 on:
@@ -10,10 +9,17 @@ permissions:
 jobs:
   merge:
     runs-on: ubuntu-latest
-
     steps:
       - name: Download project files
         uses: actions/checkout@v4
+
+      - name: Locate character and animation files
+        shell: bash
+        run: |
+          echo "FBX files found in repository:"
+          find . -type f -iname '*.fbx' -print
+          echo "Checking X Bot file:"
+          find . -type f -iname 'X Bot.fbx' -print
 
       - name: Install Blender
         run: |
@@ -21,9 +27,19 @@ jobs:
           sudo apt-get install -y blender
 
       - name: Merge character and animations
+        shell: bash
         run: |
           mkdir -p build
-          blender --background --python scripts/merge_xbot_animations.py
+          blender --background --python scripts/merge_xbot_animations.py 2>&1 | tee blender-merge.log
+          test -f build/XBot_Animated.glb
+
+      - name: Upload diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: XBot-Merge-Log
+          path: blender-merge.log
+          if-no-files-found: warn
 
       - name: Upload animated character
         uses: actions/upload-artifact@v4
