@@ -7,11 +7,13 @@ const WORLD_MANAGER_SCRIPT = preload("res://scripts/world/world_manager.gd")
 const WORLD_EXTRAS_SCRIPT = preload("res://scripts/world/world_extras.gd")
 const WORLD_LIFE_SCRIPT = preload("res://scripts/world/world_life.gd")
 const EGYPT_REGIONS_SCRIPT = preload("res://scripts/world/egypt_regions.gd")
+const EGYPT_REGION_BUILDER_SCRIPT = preload("res://scripts/world/egypt_region_builder.gd")
 
 var player_reference: Node3D
 var world_manager: Node3D
 var world_extras: Node3D
 var world_life: Node3D
+var region_builder: Node3D
 
 
 func _ready() -> void:
@@ -1129,6 +1131,15 @@ func create_region_menu(canvas: CanvasLayer) -> void:
 	close_button.pressed.connect(func(): panel.visible = false)
 	open_button.pressed.connect(func(): panel.visible = not panel.visible)
 
+	var selected_region: Dictionary = {}
+	var travel_button := create_action_button("سافر للمحافظة")
+	travel_button.custom_minimum_size = Vector2(190.0, 52.0)
+	layout.add_child(travel_button)
+	travel_button.pressed.connect(func():
+		if not selected_region.is_empty():
+			travel_to_region(selected_region)
+			panel.visible = false
+	)
 	var regions: Array[Dictionary] = EGYPT_REGIONS_SCRIPT.all_regions()
 	for item in regions:
 		var region_button := Button.new()
@@ -1137,9 +1148,25 @@ func create_region_menu(canvas: CanvasLayer) -> void:
 		region_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		region_list.add_child(region_button)
 		region_button.pressed.connect(func():
+			selected_region = item
 			var places: Array = item.get("places", [])
-			details.text = str(item.get("name", "")) + "\n" + str(item.get("zone", "")) + "\n\nالمدن والمراكز:\n• " + "\n• ".join(places)
+			details.text = str(item.get("name", "")) + "\\n" + str(item.get("zone", "")) + "\\n\\nالمدن والمراكز المدرجة:\\n• " + "\\n• ".join(places) + "\\n\\nاضغط «سافر للمحافظة» لتوليد نموذج قابل للاستكشاف."
 		)
+
+
+func travel_to_region(region: Dictionary) -> void:
+	if not is_instance_valid(region_builder):
+		region_builder = Node3D.new()
+		region_builder.name = "EgyptRegionBuilder"
+		region_builder.set_script(EGYPT_REGION_BUILDER_SCRIPT)
+		add_child(region_builder)
+	var destination := Vector3(0.0, 0.5, 0.0)
+	region_builder.call("build_region", region, destination)
+	if is_instance_valid(player_reference):
+		player_reference.global_position = destination + Vector3(0.0, 0.5, 0.0)
+		if player_reference is CharacterBody3D:
+			(player_reference as CharacterBody3D).velocity = Vector3.ZERO
+	print("تم توليد منطقة محافظة: ", region.get("name", ""))
 
 
 func create_action_button(label_text: String) -> Button:
