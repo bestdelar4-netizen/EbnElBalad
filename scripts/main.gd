@@ -6,6 +6,7 @@ const JOYSTICK_SCRIPT = preload("res://scripts/virtual_joystick.gd")
 const WORLD_MANAGER_SCRIPT = preload("res://scripts/world/world_manager.gd")
 const WORLD_EXTRAS_SCRIPT = preload("res://scripts/world/world_extras.gd")
 const WORLD_LIFE_SCRIPT = preload("res://scripts/world/world_life.gd")
+const EGYPT_REGIONS_SCRIPT = preload("res://scripts/world/egypt_regions.gd")
 
 var player_reference: Node3D
 var world_manager: Node3D
@@ -1038,6 +1039,7 @@ func create_mobile_controls() -> void:
 	buttons.offset_bottom = -20.0
 	buttons.add_theme_constant_override("separation", 12)
 	canvas.add_child(buttons)
+	create_region_menu(canvas)
 
 	var jump_button := create_action_button("قفز")
 	buttons.add_child(jump_button)
@@ -1051,6 +1053,93 @@ func create_mobile_controls() -> void:
 	var interact_button := create_action_button("تفاعل")
 	buttons.add_child(interact_button)
 	interact_button.pressed.connect(_on_interact_pressed)
+
+
+# --------------------------------------------------
+# دليل محافظات مصر ومدنها ومراكزها
+# --------------------------------------------------
+func create_region_menu(canvas: CanvasLayer) -> void:
+	var open_button := create_action_button("خريطة مصر")
+	open_button.name = "EgyptMapButton"
+	open_button.custom_minimum_size = Vector2(145.0, 52.0)
+	open_button.anchor_left = 1.0
+	open_button.anchor_right = 1.0
+	open_button.anchor_top = 0.0
+	open_button.anchor_bottom = 0.0
+	open_button.position = Vector2(-165.0, 18.0)
+	canvas.add_child(open_button)
+
+	var panel := PanelContainer.new()
+	panel.name = "EgyptRegionPanel"
+	panel.anchor_left = 0.5
+	panel.anchor_top = 0.08
+	panel.anchor_right = 0.5
+	panel.anchor_bottom = 0.92
+	panel.offset_left = -260.0
+	panel.offset_right = 260.0
+	panel.offset_top = 0.0
+	panel.offset_bottom = 0.0
+	panel.visible = false
+	canvas.add_child(panel)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 8)
+	panel.add_child(layout)
+
+	var title := Label.new()
+	title.text = "دليل محافظات مصر الـ٢٧"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 24)
+	layout.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.text = "اختار محافظة لعرض المدن والمراكز"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	layout.add_child(subtitle)
+
+	var split := HBoxContainer.new()
+	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	layout.add_child(split)
+
+	var region_scroll := ScrollContainer.new()
+	region_scroll.custom_minimum_size = Vector2(155.0, 0.0)
+	region_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	region_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	split.add_child(region_scroll)
+
+	var region_list := VBoxContainer.new()
+	region_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	region_scroll.add_child(region_list)
+
+	var details_scroll := ScrollContainer.new()
+	details_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	details_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	split.add_child(details_scroll)
+
+	var details := Label.new()
+	details.name = "RegionDetails"
+	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	details.text = "اختار محافظة من القائمة"
+	details_scroll.add_child(details)
+
+	var close_button := create_action_button("إغلاق")
+	close_button.custom_minimum_size = Vector2(100.0, 48.0)
+	layout.add_child(close_button)
+	close_button.pressed.connect(func(): panel.visible = false)
+	open_button.pressed.connect(func(): panel.visible = not panel.visible)
+
+	var regions: Array[Dictionary] = EGYPT_REGIONS_SCRIPT.all_regions()
+	for item in regions:
+		var region_button := Button.new()
+		region_button.text = str(item.get("name", ""))
+		region_button.custom_minimum_size = Vector2(135.0, 44.0)
+		region_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		region_list.add_child(region_button)
+		region_button.pressed.connect(func():
+			var places: Array = item.get("places", [])
+			details.text = str(item.get("name", "")) + "\n" + str(item.get("zone", "")) + "\n\nالمدن والمراكز:\n• " + "\n• ".join(places)
+		)
 
 
 func create_action_button(label_text: String) -> Button:
