@@ -80,7 +80,7 @@ func _physics_process(delta: float) -> void:
 			var speed: float = RUN_SPEED if running else WALK_SPEED
 			velocity.x = move_toward(velocity.x, move_direction.x * speed, 24.0 * delta)
 			velocity.z = move_toward(velocity.z, move_direction.z * speed, 24.0 * delta)
-			var target_angle: float = atan2(move_direction.x, move_direction.z)
+			var target_angle: float = atan2(move_direction.x, -move_direction.z)
 			rotation.y = lerp_angle(rotation.y, target_angle, minf(1.0, 10.0 * delta))
 		else:
 			move_direction = Vector3.ZERO
