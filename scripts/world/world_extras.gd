@@ -43,8 +43,8 @@ func create_trees() -> void:
                 )
 
                 if nearest_crossing > 13.0:
-                    var tree_x := road_x + side * 22.0
-                    var tree_z := z + rng.randf_range(-2.0, 2.0)
+                    var tree_x: float = float(road_x) + float(side) * 22.0
+                    var tree_z: float = float(z) + rng.randf_range(-2.0, 2.0)
                     create_tree(Vector3(tree_x, 0.0, tree_z), rng)
 
                 z += 22.0
