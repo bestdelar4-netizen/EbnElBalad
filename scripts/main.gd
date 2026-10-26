@@ -1002,8 +1002,14 @@ func create_starter_neighborhood() -> void:
 		make_box("StarterShopFront", Vector3(x, 1.25, -9.38), Vector3(3.0, 2.25, 0.12), Color("#334b50"), false)
 		make_box("StarterShopAwning", Vector3(x, 2.55, -9.8), Vector3(4.2, 0.25, 1.0), [Color("#b93f32"), Color("#e2c24c"), Color("#28754a"), Color("#e7e0d1")][i], false)
 		if i == 0:
-			make_box("AbuSenSignBoard", Vector3(x, 3.15, -9.34), Vector3(4.8, 0.75, 0.18), Color("#153f2c"), false)
-			create_shop_sign_text("أبو سن", Vector3(x, 3.15, -9.20))
+			# محل موبايلات «أبو سن»: لافتة مخصصة وفاترينة زجاج وأجهزة معروضة.
+			make_box("AbuSenSignBoard", Vector3(x, 3.15, -9.34), Vector3(5.8, 0.85, 0.18), Color("#153f2c"), false)
+			create_shop_sign_text("أبو سن للموبايلات", Vector3(x, 3.15, -9.20))
+			make_box("AbuSenPhoneDisplay", Vector3(x, 1.25, -9.25), Vector3(3.5, 1.65, 0.10), Color("#182c35"), false)
+			for phone_index in range(5):
+				var phone_x: float = x - 1.35 + float(phone_index) * 0.68
+				make_box("AbuSenDisplayPhone", Vector3(phone_x, 1.25, -9.16), Vector3(0.34, 0.62, 0.07), [Color("#17191c"), Color("#252a31"), Color("#b7b9bd"), Color("#202c3a"), Color("#8d9a9c")][phone_index], false)
+				make_box("AbuSenPhoneScreen", Vector3(phone_x, 1.28, -9.115), Vector3(0.26, 0.47, 0.025), [Color("#4386a8"), Color("#547fa4"), Color("#6d9c9a"), Color("#536b91"), Color("#7da5b7")][phone_index], false)
 		else:
 			make_box("StarterShopSign", Vector3(x, 3.15, -9.34), Vector3(4.8, 0.55, 0.16), Color("#185b3d"), false)
 	# توك توك ظاهر من نقطة البداية، وليس بعيدًا في القرية فقط.
