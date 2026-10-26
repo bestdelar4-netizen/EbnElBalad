@@ -1118,12 +1118,18 @@ func create_region_menu(canvas: CanvasLayer) -> void:
 	details_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	split.add_child(details_scroll)
 
+	var details_content := VBoxContainer.new()
+	details_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	details_scroll.add_child(details_content)
 	var details := Label.new()
 	details.name = "RegionDetails"
 	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	details.text = "اختار محافظة من القائمة"
-	details_scroll.add_child(details)
+	details_content.add_child(details)
+	var places_box := VBoxContainer.new()
+	places_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	details_content.add_child(places_box)
 
 	var close_button := create_action_button("إغلاق")
 	close_button.custom_minimum_size = Vector2(100.0, 48.0)
@@ -1132,12 +1138,15 @@ func create_region_menu(canvas: CanvasLayer) -> void:
 	open_button.pressed.connect(func(): panel.visible = not panel.visible)
 
 	var selected_region: Dictionary = {}
-	var travel_button := create_action_button("سافر للمحافظة")
+	var selected_place: String = ""
+	var travel_button := create_action_button("سافر للمكان المختار")
 	travel_button.custom_minimum_size = Vector2(190.0, 52.0)
 	layout.add_child(travel_button)
 	travel_button.pressed.connect(func():
-		if not selected_region.is_empty():
-			travel_to_region(selected_region)
+		if not selected_region.is_empty() and not selected_place.is_empty():
+			var destination_data: Dictionary = selected_region.duplicate(true)
+			destination_data["settlement_type"] = "قرية" if selected_place.begins_with("قرية ") else ("مركز" if selected_place.begins_with("مركز ") else "مدينة")
+			travel_to_region(destination_data, selected_place)
 			panel.visible = false
 	)
 	var regions: Array[Dictionary] = EGYPT_REGIONS_SCRIPT.all_regions()
@@ -1149,24 +1158,32 @@ func create_region_menu(canvas: CanvasLayer) -> void:
 		region_list.add_child(region_button)
 		region_button.pressed.connect(func():
 			selected_region = item
+			selected_place = ""
+			details.text = str(item.get("name", "")) + "\\n" + str(item.get("zone", "")) + "\\nاختار مدينة أو مركزًا أو قرية من القائمة بالأسفل."
+			for child in places_box.get_children():
+				child.queue_free()
 			var places: Array = item.get("places", [])
-			details.text = str(item.get("name", "")) + "\\n" + str(item.get("zone", "")) + "\\n\\nالمدن والمراكز المدرجة:\\n• " + "\\n• ".join(places) + "\\n\\nاضغط «سافر للمحافظة» لتوليد نموذج قابل للاستكشاف."
+			for place_variant in places:
+				var place_name := str(place_variant)
+				var place_button := Button.new()
+				place_button.text = "مدينة: " + place_name
+				place_button.custom_minimum_size = Vector2(170.0, 42.0)
+				place_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				places_box.add_child(place_button)
+				place_button.pressed.connect(func():
+					selected_place = place_name
+					details.text = str(item.get("name", "")) + "\\nالمكان المختار: " + place_name + "\\nسيتم توليد منطقة مستقلة لهذا المكان."
+				)
+				var village_button := Button.new()
+				village_button.text = "قرية من " + place_name
+				village_button.custom_minimum_size = Vector2(170.0, 38.0)
+				village_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				places_box.add_child(village_button)
+				village_button.pressed.connect(func():
+					selected_place = "قرية " + place_name
+					details.text = str(item.get("name", "")) + "\\nالقرية المختارة: " + place_name + "\\nسيتم توليد نموذج قرية مستقل."
+				)
 		)
-
-
-func travel_to_region(region: Dictionary) -> void:
-	if not is_instance_valid(region_builder):
-		region_builder = Node3D.new()
-		region_builder.name = "EgyptRegionBuilder"
-		region_builder.set_script(EGYPT_REGION_BUILDER_SCRIPT)
-		add_child(region_builder)
-	var destination := Vector3(500.0, 0.5, 500.0)
-	region_builder.call("build_region", region, destination)
-	if is_instance_valid(player_reference):
-		player_reference.global_position = destination + Vector3(0.0, 0.5, 0.0)
-		if player_reference is CharacterBody3D:
-			(player_reference as CharacterBody3D).velocity = Vector3.ZERO
-	print("تم توليد منطقة محافظة: ", region.get("name", ""))
 
 
 func create_action_button(label_text: String) -> Button:
