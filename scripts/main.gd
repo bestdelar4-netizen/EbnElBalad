@@ -329,6 +329,13 @@ func create_spawn_street() -> void:
 		make_box("SpawnLampPole", Vector3(side * 8.5, 2.6, -2.0), Vector3(0.16, 5.2, 0.16), Color("#41413d"), false)
 		make_box("SpawnLampHead", Vector3(side * 8.5, 5.15, -2.0), Vector3(0.8, 0.2, 0.35), Color("#f0dca8"), false)
 
+	# واجهة مبنى مركزية مباشرة أمام الكاميرا؛ لا تعتمد على رؤية جانبي الطريق.
+	make_box("SpawnCentralVisibleBuilding", Vector3(0.0, 4.5, -17.0), Vector3(12.0, 9.0, 3.0), Color("#d9c39e"), true)
+	make_box("SpawnCentralShopDoor", Vector3(-2.4, 1.25, -15.42), Vector3(1.5, 2.5, 0.12), Color("#543b2b"), false)
+	make_box("SpawnCentralShopWindowLeft", Vector3(0.0, 2.0, -15.42), Vector3(1.7, 1.7, 0.12), Color("#315d70"), false)
+	make_box("SpawnCentralShopWindowRight", Vector3(2.4, 2.0, -15.42), Vector3(1.7, 1.7, 0.12), Color("#315d70"), false)
+	make_box("SpawnCentralShopSign", Vector3(0.0, 3.65, -15.4), Vector3(5.8, 0.65, 0.14), Color("#185b3d"), false)
+	create_shop_sign_text("محلات ابن البلد", Vector3(0.0, 3.65, -15.25))
 	# حاجز بصري بسيط في نهاية الشارع يوضح عمق المشهد حتى من دون تحريك اللاعب.
 	make_box("SpawnFarBuilding", Vector3(0.0, 5.0, -34.0), Vector3(18.0, 10.0, 4.0), Color("#cbb99a"), true)
 
