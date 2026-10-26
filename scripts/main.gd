@@ -26,6 +26,7 @@ func _ready() -> void:
 	create_player()
 	create_world_extras()
 	create_world_life()
+	create_starter_neighborhood()
 
 
 
@@ -971,6 +972,45 @@ func create_tuk_tuk(pos: Vector3) -> void:
 	front_material.albedo_color = Color("#171717")
 	front_wheel.material_override = front_material
 	tuk.add_child(front_wheel)
+
+
+# --------------------------------------------------
+# حي البداية: مشهد واضح حول نقطة ظهور اللاعب
+# --------------------------------------------------
+
+func create_starter_neighborhood() -> void:
+	# محلات وواجهات قريبة من اللاعب بدل بدء اللعبة في مساحة تبدو فارغة.
+	for i in range(4):
+		var x: float = -18.0 + float(i) * 12.0
+		var wall: Color = [Color("#cbb99a"), Color("#bda98a"), Color("#d8c7a7"), Color("#b8b5a6")][i]
+		make_box("StarterShopBuilding", Vector3(x, 3.2, -13.0), Vector3(8.5, 6.4, 7.0), wall, true)
+		make_box("StarterShopFront", Vector3(x, 1.25, -9.38), Vector3(3.0, 2.25, 0.12), Color("#334b50"), false)
+		make_box("StarterShopAwning", Vector3(x, 2.55, -9.8), Vector3(4.2, 0.25, 1.0), [Color("#b93f32"), Color("#e2c24c"), Color("#28754a"), Color("#e7e0d1")][i], false)
+		make_box("StarterShopSign", Vector3(x, 3.15, -9.34), Vector3(4.8, 0.55, 0.16), Color("#185b3d"), false)
+	# توك توك ظاهر من نقطة البداية، وليس بعيدًا في القرية فقط.
+	create_tuk_tuk(Vector3(8.0, 0.0, 16.0))
+	# أشخاص ثابتون كبداية مرئية في الشارع، بملابس مختلفة.
+	var npc_positions: Array[Vector3] = [
+		Vector3(-5.5, 0.0, 19.0),
+		Vector3(3.8, 0.0, 25.0),
+		Vector3(13.0, 0.0, 8.0),
+		Vector3(-10.0, 0.0, -1.0)
+	]
+	var npc_colors: Array[Color] = [
+		Color("#e0d1b4"), Color("#466b45"), Color("#78523c"), Color("#344f78")
+	]
+	for i in range(npc_positions.size()):
+		var npc := Node3D.new()
+		npc.name = "StarterResident_%d" % i
+		npc.position = npc_positions[i]
+		add_child(npc)
+		make_child_capsule(npc, "Galabeya", Vector3(0.0, 0.85, 0.0), 0.34, 1.25, npc_colors[i])
+		make_child_sphere(npc, "Head", Vector3(0.0, 1.65, 0.0), 0.24, Color("#a87551"))
+		make_child_box(npc, "Hair", Vector3(0.0, 1.83, 0.0), Vector3(0.35, 0.12, 0.35), Color("#30251d"))
+	# أعمدة إنارة قريبة ومقاعد على الرصيف.
+	for side in [-1.0, 1.0]:
+		make_box("StarterLampPole", Vector3(side * 10.0, 2.5, 11.0), Vector3(0.16, 5.0, 0.16), Color("#41413d"), false)
+		make_box("StarterLampHead", Vector3(side * 10.0, 5.0, 11.0), Vector3(0.8, 0.2, 0.35), Color("#e4d9b7"), false)
 
 
 # --------------------------------------------------
