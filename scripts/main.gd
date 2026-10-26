@@ -18,10 +18,205 @@ func _ready() -> void:
 	create_world_manager()
 	create_world()
 	create_egyptian_village()
+	create_egyptian_landmarks()
 	create_mobile_controls()
 	create_player()
 	create_world_extras()
 	create_world_life()
+
+
+
+# --------------------------------------------------
+# معالم مصر: أهرامات الجيزة وبرج القاهرة ومآذن
+# --------------------------------------------------
+
+func create_egyptian_landmarks() -> void:
+	# هضبة رملية واسعة غرب المدينة
+	make_box(
+		"GizaDesert",
+		Vector3(265.0, -0.12, -70.0),
+		Vector3(210.0, 0.18, 280.0),
+		Color("#c8a66e"),
+		true
+	)
+
+	# الأهرامات الثلاثة مع قاعدة حجرية وتفاصيل صفوف الأحجار
+	create_pyramid(Vector3(250.0, 0.0, -80.0), 48.0, 42.0, Color("#d7bd8b"))
+	create_pyramid(Vector3(306.0, 0.0, -58.0), 36.0, 32.0, Color("#cbb080"))
+	create_pyramid(Vector3(208.0, 0.0, -35.0), 27.0, 25.0, Color("#e0c99b"))
+
+	# طريق صحراوي يقود ناحية منطقة الأهرامات
+	make_box(
+		"DesertAccessRoad",
+		Vector3(180.0, 0.015, -15.0),
+		Vector3(7.0, 0.08, 120.0),
+		Color("#766b5a"),
+		true
+	)
+
+	# برج القاهرة بشكل أسطواني متدرج مع قرص علوي
+	create_cairo_tower(Vector3(-178.0, 0.0, 75.0))
+
+	# مآذن مسجد في الحي؛ مع قاعدة وشرفة وقمة مدببة
+	create_minaret(Vector3(-160.0, 0.0, -65.0))
+	create_minaret(Vector3(-151.0, 0.0, -65.0))
+
+
+func create_pyramid(pos: Vector3, base_size: float, pyramid_height: float, stone_color: Color) -> void:
+	var pyramid := MeshInstance3D.new()
+	pyramid.name = "GizaPyramid"
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+	var half: float = base_size * 0.5
+	var a := Vector3(-half, 0.0, -half)
+	var b := Vector3(half, 0.0, -half)
+	var c := Vector3(half, 0.0, half)
+	var d := Vector3(-half, 0.0, half)
+	var apex := Vector3(0.0, pyramid_height, 0.0)
+
+	# كل وجه مثلث مستقل حتى تظهر أوجه الهرم بوضوح
+	surface.add_vertex(a)
+	surface.add_vertex(b)
+	surface.add_vertex(apex)
+	surface.add_vertex(b)
+	surface.add_vertex(c)
+	surface.add_vertex(apex)
+	surface.add_vertex(c)
+	surface.add_vertex(d)
+	surface.add_vertex(apex)
+	surface.add_vertex(d)
+	surface.add_vertex(a)
+	surface.add_vertex(apex)
+	# قاعدة الهرم
+	surface.add_vertex(a)
+	surface.add_vertex(d)
+	surface.add_vertex(c)
+	surface.add_vertex(a)
+	surface.add_vertex(c)
+	surface.add_vertex(b)
+
+	surface.generate_normals()
+	pyramid.mesh = surface.commit()
+	pyramid.position = pos
+
+	var stone := StandardMaterial3D.new()
+	stone.albedo_color = stone_color
+	stone.roughness = 1.0
+	stone.cull_mode = BaseMaterial3D.CULL_DISABLED
+	pyramid.material_override = stone
+	add_child(pyramid)
+
+	# خطوط حجرية خفيفة على الواجهات لإظهار طبقات البناء من بعيد
+	for row in range(1, 7):
+		var y: float = float(row) * pyramid_height / 7.0
+		var width_at_row: float = base_size * (1.0 - y / pyramid_height)
+		if width_at_row > 1.5:
+			make_box(
+				"PyramidStoneCourse",
+				pos + Vector3(0.0, y, -half * (1.0 - y / pyramid_height)),
+				Vector3(width_at_row, 0.12, 0.22),
+				stone_color.darkened(0.08),
+				false
+			)
+
+
+func create_cairo_tower(pos: Vector3) -> void:
+	var tower := Node3D.new()
+	tower.name = "CairoTower"
+	tower.position = pos
+	add_child(tower)
+
+	var base := MeshInstance3D.new()
+	base.name = "TowerBase"
+	var base_mesh := CylinderMesh.new()
+	base_mesh.top_radius = 4.0
+	base_mesh.bottom_radius = 5.5
+	base_mesh.height = 5.0
+	base.mesh = base_mesh
+	base.position.y = 2.5
+	var concrete := StandardMaterial3D.new()
+	concrete.albedo_color = Color("#b9a98b")
+	concrete.roughness = 0.8
+	base.material_override = concrete
+	tower.add_child(base)
+
+	var shaft := MeshInstance3D.new()
+	shaft.name = "LatticeTowerShaft"
+	var shaft_mesh := CylinderMesh.new()
+	shaft_mesh.top_radius = 2.2
+	shaft_mesh.bottom_radius = 4.0
+	shaft_mesh.height = 32.0
+	shaft.mesh = shaft_mesh
+	shaft.position.y = 21.0
+	shaft.material_override = concrete
+	tower.add_child(shaft)
+
+	var viewing_deck := MeshInstance3D.new()
+	viewing_deck.name = "ViewingDeck"
+	var deck_mesh := CylinderMesh.new()
+	deck_mesh.top_radius = 4.8
+	deck_mesh.bottom_radius = 4.8
+	deck_mesh.height = 2.0
+	viewing_deck.mesh = deck_mesh
+	viewing_deck.position.y = 37.0
+	viewing_deck.material_override = concrete
+	tower.add_child(viewing_deck)
+
+	var crown := MeshInstance3D.new()
+	crown.name = "TowerCrown"
+	var crown_mesh := CylinderMesh.new()
+	crown_mesh.top_radius = 1.1
+	crown_mesh.bottom_radius = 2.4
+	crown_mesh.height = 6.0
+	crown.mesh = crown_mesh
+	crown.position.y = 41.0
+	crown.material_override = concrete
+	tower.add_child(crown)
+
+
+func create_minaret(pos: Vector3) -> void:
+	var minaret := Node3D.new()
+	minaret.name = "MosqueMinaret"
+	minaret.position = pos
+	add_child(minaret)
+
+	var plaster := StandardMaterial3D.new()
+	plaster.albedo_color = Color("#e0d3b7")
+	plaster.roughness = 0.9
+
+	var shaft := MeshInstance3D.new()
+	shaft.name = "MinaretShaft"
+	var shaft_mesh := CylinderMesh.new()
+	shaft_mesh.top_radius = 0.65
+	shaft_mesh.bottom_radius = 1.0
+	shaft_mesh.height = 12.0
+	shaft.mesh = shaft_mesh
+	shaft.position.y = 6.0
+	shaft.material_override = plaster
+	minaret.add_child(shaft)
+
+	var balcony := MeshInstance3D.new()
+	balcony.name = "MinaretBalcony"
+	var balcony_mesh := CylinderMesh.new()
+	balcony_mesh.top_radius = 1.35
+	balcony_mesh.bottom_radius = 1.35
+	balcony_mesh.height = 0.35
+	balcony.mesh = balcony_mesh
+	balcony.position.y = 9.0
+	balcony.material_override = plaster
+	minaret.add_child(balcony)
+
+	var cap := MeshInstance3D.new()
+	cap.name = "MinaretTop"
+	var cap_mesh := CylinderMesh.new()
+	cap_mesh.top_radius = 0.05
+	cap_mesh.bottom_radius = 0.75
+	cap_mesh.height = 2.0
+	cap.mesh = cap_mesh
+	cap.position.y = 13.0
+	cap.material_override = plaster
+	minaret.add_child(cap)
 
 
 # --------------------------------------------------
@@ -81,7 +276,7 @@ func create_ground() -> void:
 	make_box(
 		"CityGround",
 		Vector3(0.0, -0.5, 0.0),
-		Vector3(440.0, 1.0, 1100.0),
+		Vector3(700.0, 1.0, 1100.0),
 		Color(0.65, 0.57, 0.4),
 		true
 	)
