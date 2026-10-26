@@ -425,6 +425,14 @@ func create_building(
 		false
 	)
 
+	add_rooftop_detail(pos, height)
+
+	if height > 10.0:
+		make_box("BalconySlab", Vector3(front_x - 0.32, 3.0, pos.z), Vector3(0.7, 0.14, 2.4), Color("#a99b83"), false)
+		make_box("BalconyRail", Vector3(front_x - 0.68, 3.35, pos.z), Vector3(0.08, 0.6, 2.4), Color("#514d46"), false)
+
+	if rng.randf() > 0.45:
+		make_box("AirConditioner", Vector3(front_x - 0.22, 2.6, pos.z + dimensions.z * 0.28), Vector3(0.42, 0.38, 0.7), Color("#d8d6cd"), false)
 
 
 func add_rooftop_detail(building_pos: Vector3, building_height: float) -> void:
