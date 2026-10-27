@@ -8,6 +8,7 @@ const WORLD_EXTRAS_SCRIPT = preload("res://scripts/world/world_extras.gd")
 const WORLD_LIFE_SCRIPT = preload("res://scripts/world/world_life.gd")
 const EGYPT_REGIONS_SCRIPT = preload("res://scripts/world/egypt_regions.gd")
 const EGYPT_REGION_BUILDER_SCRIPT = preload("res://scripts/world/egypt_region_builder.gd")
+const REALISTIC_CITY_UPGRADE_SCRIPT = preload("res://scripts/world/realistic_city_upgrade.gd")
 
 var player_reference: Node3D
 var world_manager: Node3D
@@ -29,6 +30,7 @@ func _ready() -> void:
 	create_world_extras()
 	create_world_life()
 	create_starter_neighborhood()
+	create_realistic_city_upgrade()
 
 
 func create_emergency_visible_world() -> void:
@@ -1148,6 +1150,14 @@ func create_starter_neighborhood() -> void:
 	for side in [-1.0, 1.0]:
 		make_box("StarterLampPole", Vector3(side * 10.0, 2.5, 11.0), Vector3(0.16, 5.0, 0.16), Color("#41413d"), false)
 		make_box("StarterLampHead", Vector3(side * 10.0, 5.0, 11.0), Vector3(0.8, 0.2, 0.35), Color("#e4d9b7"), false)
+
+
+func create_realistic_city_upgrade() -> void:
+	var city_upgrade := Node3D.new()
+	city_upgrade.name = "RealisticEgyptianCityUpgrade"
+	city_upgrade.set_script(REALISTIC_CITY_UPGRADE_SCRIPT)
+	add_child(city_upgrade)
+	city_upgrade.call("initialize", player_reference)
 
 
 # --------------------------------------------------
