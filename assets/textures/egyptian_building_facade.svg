@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs>
+ <linearGradient id="wall" x2="0" y2="1"><stop stop-color="#e1d1b2"/><stop offset="1" stop-color="#a9987d"/></linearGradient>
+ <linearGradient id="glass" x2="0" y2="1"><stop stop-color="#8cb6c4"/><stop offset=".55" stop-color="#315565"/><stop offset="1" stop-color="#172b38"/></linearGradient>
+ <pattern id="grain" width="47" height="39" patternUnits="userSpaceOnUse"><path d="M4 8h2M31 21h3M15 33h2" stroke="#75664f" stroke-opacity=".22" stroke-width="2"/></pattern>
+</defs>
+<rect width="1024" height="1024" fill="url(#wall)"/>
+<rect width="1024" height="1024" fill="url(#grain)"/>
+<path d="M0 15H1024M0 252H1024M0 505H1024M0 758H1024M0 1008H1024" stroke="#f3e5c8" stroke-width="13"/>
+<g stroke="#8b7b63" stroke-width="12" fill="#c7b79a">
+ <rect x="68" y="54" width="260" height="170" rx="5"/><rect x="382" y="54" width="260" height="170" rx="5"/><rect x="696" y="54" width="260" height="170" rx="5"/>
+ <rect x="68" y="293" width="260" height="170" rx="5"/><rect x="382" y="293" width="260" height="170" rx="5"/><rect x="696" y="293" width="260" height="170" rx="5"/>
+ <rect x="68" y="546" width="260" height="170" rx="5"/><rect x="382" y="546" width="260" height="170" rx="5"/><rect x="696" y="546" width="260" height="170" rx="5"/>
+ <rect x="68" y="800" width="260" height="170" rx="5"/><rect x="382" y="800" width="260" height="170" rx="5"/><rect x="696" y="800" width="260" height="170" rx="5"/>
+</g>
+<g fill="url(#glass)" stroke="#eee2ca" stroke-width="10">
+ <rect x="86" y="72" width="224" height="132"/><rect x="400" y="72" width="224" height="132"/><rect x="714" y="72" width="224" height="132"/>
+ <rect x="86" y="311" width="224" height="132"/><rect x="400" y="311" width="224" height="132"/><rect x="714" y="311" width="224" height="132"/>
+ <rect x="86" y="564" width="224" height="132"/><rect x="400" y="564" width="224" height="132"/><rect x="714" y="564" width="224" height="132"/>
+ <rect x="86" y="818" width="224" height="132"/><rect x="400" y="818" width="224" height="132"/><rect x="714" y="818" width="224" height="132"/>
+</g>
+<g stroke="#e9dfca" stroke-width="8"><path d="M198 72v132M512 72v132M826 72v132M198 311v132M512 311v132M826 311v132M198 564v132M512 564v132M826 564v132M198 818v132M512 818v132M826 818v132"/></g>
+</svg>
