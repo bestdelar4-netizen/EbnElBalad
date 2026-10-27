@@ -12,6 +12,15 @@ func initialize(player_node: Node3D) -> void:
 	create_minimap()
 
 
+func _process(delta: float) -> void:
+	# حركة مرورية خفيفة على الشارع؛ تعود المركبات للبداية عند نهاية المسار.
+	for item in get_children():
+		if item is Node3D and item.has_meta("traffic_speed"):
+			item.position.z += float(item.get_meta("traffic_speed")) * delta
+			if item.position.z > 100.0:
+				item.position.z = 22.0
+
+
 func material(color: Color, roughness_value: float = 0.88) -> StandardMaterial3D:
 	var result := StandardMaterial3D.new()
 	result.albedo_color = color
@@ -65,7 +74,7 @@ func create_shop_street() -> void:
 	for side in [-1.0, 1.0]:
 		for index in range(8):
 			var z := 34.0 + float(index) * 10.5
-			var x := side * 16.2
+			var x := side * 25.5
 			var height := 10.0 + float((index * 3) % 5) * 1.7
 			var building := Node3D.new()
 			building.name = "EgyptianShopBuilding_%d_%d" % [int(side), index]
@@ -116,7 +125,7 @@ func create_shop_street() -> void:
 	for side in [-1.0, 1.0]:
 		for index in range(5):
 			var z := 42.0 + float(index) * 16.0
-			var x := side * 30.0
+			var x := side * 41.0
 			var height := 13.0 + float(index % 3) * 3.0
 			box(self, "BackgroundApartment", Vector3(x, height * 0.5, z), Vector3(10.0, height, 11.0), plaster_colors[(index + 2) % plaster_colors.size()])
 			for floor_index in range(1, int(height / 3.0)):
@@ -167,6 +176,8 @@ func create_car(pos: Vector3, body_color: Color, heading: float) -> void:
 	car.name = "EgyptianStreetCar"
 	car.position = pos
 	car.rotation_degrees.y = heading
+	if pos.z < 35.0:
+		car.set_meta("traffic_speed", 1.8)
 	add_child(car)
 	box(car, "CarLowerBody", Vector3(0.0, 0.68, 0.0), Vector3(1.9, 0.65, 4.0), body_color)
 	box(car, "CarHood", Vector3(0.0, 0.95, -1.25), Vector3(1.8, 0.28, 1.3), body_color)
@@ -186,6 +197,8 @@ func create_tuk_tuk_model(pos: Vector3, body_color: Color, roof_color: Color) ->
 	var tuk := Node3D.new()
 	tuk.name = "DetailedEgyptianTukTuk"
 	tuk.position = pos
+	if pos.z < 45.0:
+		tuk.set_meta("traffic_speed", 1.25)
 	add_child(tuk)
 	box(tuk, "TukChassis", Vector3(0.0, 0.48, 0.0), Vector3(1.45, 0.24, 2.35), Color("#252525"))
 	box(tuk, "TukFrontNose", Vector3(0.0, 0.83, -0.82), Vector3(1.3, 0.62, 0.72), body_color)
@@ -205,6 +218,8 @@ func create_motorcycle(pos: Vector3, bike_color: Color) -> void:
 	var bike := Node3D.new()
 	bike.name = "EgyptianMotorcycle"
 	bike.position = pos
+	if pos.z < 30.0:
+		bike.set_meta("traffic_speed", 2.2)
 	add_child(bike)
 	cylinder(bike, "RearWheel", Vector3(0.0, 0.42, 0.9), 0.42, 0.16, Color("#151515"), true)
 	cylinder(bike, "FrontWheel", Vector3(0.0, 0.42, -0.9), 0.42, 0.16, Color("#151515"), true)
