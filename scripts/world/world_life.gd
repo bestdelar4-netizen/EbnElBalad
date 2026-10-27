@@ -45,8 +45,29 @@ func set_player(target: Node3D) -> void:
     if is_instance_valid(player):
         var config := ConfigFile.new()
         if config.load(SAVE_PATH) == OK:
-            var saved_position: Vector3 = config.get_value("player", "position", player.global_position)
-            player.global_position = saved_position
+            var saved_position: Vector3 = config.get_value(
+                "player",
+                "position",
+                Vector3(0.0, 0.2, 5.0)
+            )
+
+            # لا تستعد موقع حفظ خارج منطقة المدينة؛ قد يترك اللاعب بعيدًا
+            # عن المباني والطرق التي يتم إنشاؤها حول نقطة البداية.
+            var saved_position_is_valid: bool = (
+                absf(saved_position.x) <= 300.0
+                and absf(saved_position.z) <= 420.0
+                and saved_position.y >= -2.0
+                and saved_position.y <= 80.0
+            )
+
+            if saved_position_is_valid:
+                player.global_position = saved_position
+            else:
+                player.global_position = Vector3(0.0, 0.2, 5.0)
+                player.velocity = Vector3.ZERO
+                push_warning(
+                    "موقع الحفظ كان خارج المدينة؛ تمت إعادة اللاعب إلى شارع البداية."
+                )
     update_hud()
 
 
