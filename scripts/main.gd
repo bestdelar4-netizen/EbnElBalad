@@ -480,6 +480,22 @@ func create_building(
 		dimensions.x / 2.0 + 0.04
 	)
 
+	# خامة واجهة مصرية بتفاصيل الشبابيك واللياسة، على الواجهة المواجهة للشارع.
+	var facade := MeshInstance3D.new()
+	facade.name = "TexturedEgyptianFacade"
+	var facade_mesh := QuadMesh.new()
+	facade_mesh.size = Vector2(dimensions.z, height)
+	facade.mesh = facade_mesh
+	facade.position = Vector3(front_x, pos.y + height * 0.5, pos.z)
+	facade.rotation.y = deg_to_rad(90.0)
+	var facade_material := StandardMaterial3D.new()
+	facade_material.albedo_texture = load("res://assets/textures/egyptian_building_facade.svg")
+	facade_material.roughness = 0.92
+	facade_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	facade_material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	facade.material_override = facade_material
+	add_child(facade)
+
 	for floor_index in range(1, int(height / 3.0)):
 		for window_index in range(2):
 			var window_z := pos.z + (
@@ -1094,6 +1110,19 @@ func create_starter_neighborhood() -> void:
 			facade.material_override = facade_material
 			add_child(facade)
 		else:
+			# خامة واجهة للمحلات المجاورة، مع إبقاء اللافتة والمظلة في المقدمة.
+			var shop_facade := MeshInstance3D.new()
+			shop_facade.name = "StarterShopTexturedFacade"
+			var shop_facade_mesh := QuadMesh.new()
+			shop_facade_mesh.size = Vector2(8.5, 6.4)
+			shop_facade.mesh = shop_facade_mesh
+			shop_facade.position = Vector3(x, 3.2, -9.42)
+			var shop_facade_material := StandardMaterial3D.new()
+			shop_facade_material.albedo_texture = load("res://assets/textures/egyptian_building_facade.svg")
+			shop_facade_material.roughness = 0.9
+			shop_facade_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+			shop_facade.material_override = shop_facade_material
+			add_child(shop_facade)
 			make_box("StarterShopSign", Vector3(x, 3.15, -9.34), Vector3(4.8, 0.55, 0.16), Color("#185b3d"), false)
 	# توك توك ظاهر من نقطة البداية، وليس بعيدًا في القرية فقط.
 	create_tuk_tuk(Vector3(8.0, 0.0, 16.0))
