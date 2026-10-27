@@ -231,6 +231,28 @@ func create_motorcycle(pos: Vector3, bike_color: Color) -> void:
 	box(bike, "RearMudguard", Vector3(0.0, 0.75, 0.92), Vector3(0.42, 0.12, 0.55), bike_color)
 
 
+func _on_map_destination_selected(target: Vector3) -> void:
+	# علامة ثلاثية الأبعاد للوجهة التي يحددها اللاعب من الخريطة.
+	var old_marker := get_node_or_null("MapWaypointMarker")
+	if is_instance_valid(old_marker):
+		old_marker.queue_free()
+	var marker := Node3D.new()
+	marker.name = "MapWaypointMarker"
+	marker.position = Vector3(target.x, 0.0, target.z)
+	add_child(marker)
+	var pole := cylinder(marker, "WaypointPole", Vector3(0.0, 1.1, 0.0), 0.12, 2.2, Color("#f2a62c"))
+	pole.material_override = material(Color("#f2a62c"), 0.3)
+	var beacon := MeshInstance3D.new()
+	beacon.name = "WaypointBeacon"
+	var beacon_mesh := SphereMesh.new()
+	beacon_mesh.radius = 0.38
+	beacon_mesh.height = 0.76
+	beacon.mesh = beacon_mesh
+	beacon.position = Vector3(0.0, 2.35, 0.0)
+	beacon.material_override = material(Color("#ffd15c"), 0.25)
+	marker.add_child(beacon)
+
+
 func create_minimap() -> void:
 	var canvas := CanvasLayer.new()
 	canvas.name = "CircularCityMapLayer"
@@ -243,4 +265,5 @@ func create_minimap() -> void:
 	map.position = Vector2(18.0, 18.0)
 	map.size = Vector2(178.0, 178.0)
 	map.set("player", player)
+	map.connect("destination_selected", Callable(self, "_on_map_destination_selected"))
 	canvas.add_child(map)
