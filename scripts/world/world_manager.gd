@@ -59,6 +59,10 @@ func load_region(
         push_warning("لا يوجد مشهد لتحميل المنطقة: " + region_id)
         return null
 
+    if not is_instance_valid(region_root):
+        push_warning("حاوية المناطق غير جاهزة؛ تم تجاهل تحميل المنطقة.")
+        return null
+
     var instance := scene.instantiate() as Node3D
 
     if instance == null:
