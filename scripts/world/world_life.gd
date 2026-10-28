@@ -377,7 +377,6 @@ func _process(delta: float) -> void:
                     var player_body: CharacterBody3D = player as CharacterBody3D
                     player_body.velocity.x -= away.x * 3.0
                     player_body.velocity.z -= away.z * 3.0
-                    player_body.move_and_slide()
 
     for npc in npcs:
         if not is_instance_valid(npc):
