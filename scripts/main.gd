@@ -1641,6 +1641,7 @@ func travel_to_region(region: Dictionary, settlement_name: String = "") -> void:
 	region_builder.call("build_region", region, destination, settlement_name)
 
 	if is_instance_valid(player_reference):
-		player_reference.global_position = destination + Vector3(0.0, 1.0, 0.0)
+		if is_instance_valid(player_reference):
+			player_reference.global_position = destination + Vector3(0.0, 1.0, 0.0)
 		if player_reference is CharacterBody3D:
 			(player_reference as CharacterBody3D).velocity = Vector3.ZERO
