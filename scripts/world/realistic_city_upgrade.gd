@@ -73,8 +73,8 @@ func create_shop_street() -> void:
 	# صف محلات وعمارات على جانبي شارع البداية.
 	for side in [-1.0, 1.0]:
 		for index in range(8):
-			var z: float = 34.0 + float(index) * 10.5
-			var x: float = float(side) * 25.5
+			var z: float = -34.0 - float(index) * 10.5
+			var x: float = float(side) * 11.0
 			var height: float = 10.0 + float((index * 3) % 5) * 1.7
 			var building: Node3D = Node3D.new()
 			building.name = "EgyptianShopBuilding_%d_%d" % [int(side), index]
@@ -124,7 +124,7 @@ func create_shop_street() -> void:
 	# مبانٍ سكنية أبعد لإغلاق المنظر وإعطاء عمق للشارع.
 	for side in [-1.0, 1.0]:
 		for index in range(5):
-			var z: float = 42.0 + float(index) * 16.0
+			var z: float = -42.0 - float(index) * 16.0
 			var x: float = float(side) * 41.0
 			var height: float = 13.0 + float(index % 3) * 3.0
 			box(self, "BackgroundApartment", Vector3(x, height * 0.5, z), Vector3(10.0, height, 11.0), plaster_colors[(index + 2) % plaster_colors.size()])
@@ -137,7 +137,7 @@ func create_street_life() -> void:
 	# عربات خضار صغيرة ومقاعد وأكياس وصناديق أمام المحلات.
 	for index in range(5):
 		var side := -1.0 if index % 2 == 0 else 1.0
-		var z := 40.0 + float(index) * 17.0
+		var z: float = -40.0 - float(index) * 17.0
 		var cart := Node3D.new()
 		cart.name = "EgyptianStreetVendorCart_%d" % index
 		cart.position = Vector3(side * 8.2, 0.0, z)
@@ -153,7 +153,7 @@ func create_street_life() -> void:
 	# أعمدة إنارة وأسلاك علوية.
 	for side in [-1.0, 1.0]:
 		for index in range(3):
-			var z := 37.0 + float(index) * 28.0
+			var z: float = -37.0 - float(index) * 28.0
 			box(self, "StreetLampPole", Vector3(side * 9.0, 3.1, z), Vector3(0.12, 6.2, 0.12), Color("#42413b"))
 			box(self, "StreetLampArm", Vector3(side * 8.4, 6.0, z), Vector3(1.2, 0.12, 0.12), Color("#42413b"))
 			box(self, "StreetLamp", Vector3(side * 7.9, 5.9, z), Vector3(0.5, 0.16, 0.28), Color("#e9d7a2"))
@@ -161,14 +161,14 @@ func create_street_life() -> void:
 
 func create_vehicles() -> void:
 	# سيارات ثابتة على جانب الطريق، بتفاصيل زجاج ومصابيح ومرايا وعجلات.
-	create_car(Vector3(-5.4, 0.0, 29.0), Color("#8d3028"), 0.0)
-	create_car(Vector3(5.5, 0.0, 51.0), Color("#d4d0c4"), 180.0)
-	create_car(Vector3(-5.3, 0.0, 75.0), Color("#315c72"), 0.0)
-	create_tuk_tuk_model(Vector3(4.0, 0.0, 37.0), Color("#d7b72c"), Color("#1c5a37"))
-	create_tuk_tuk_model(Vector3(-4.1, 0.0, 62.0), Color("#2f5f3b"), Color("#242424"))
-	create_motorcycle(Vector3(1.9, 0.0, 24.0), Color("#a72f28"))
-	create_motorcycle(Vector3(-2.1, 0.0, 46.0), Color("#222b31"))
-	create_motorcycle(Vector3(2.2, 0.0, 68.0), Color("#c3a64b"))
+	create_car(Vector3(-5.4, 0.0, -29.0), Color("#8d3028"), 0.0)
+	create_car(Vector3(5.5, 0.0, -51.0), Color("#d4d0c4"), 180.0)
+	create_car(Vector3(-5.3, 0.0, -75.0), Color("#315c72"), 0.0)
+	create_tuk_tuk_model(Vector3(4.0, 0.0, -37.0), Color("#d7b72c"), Color("#1c5a37"))
+	create_tuk_tuk_model(Vector3(-4.1, 0.0, -62.0), Color("#2f5f3b"), Color("#242424"))
+	create_motorcycle(Vector3(1.9, 0.0, -24.0), Color("#a72f28"))
+	create_motorcycle(Vector3(-2.1, 0.0, -46.0), Color("#222b31"))
+	create_motorcycle(Vector3(2.2, 0.0, -68.0), Color("#c3a64b"))
 
 
 func create_car(pos: Vector3, body_color: Color, heading: float) -> void:
