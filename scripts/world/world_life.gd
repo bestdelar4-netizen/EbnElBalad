@@ -114,6 +114,7 @@ func create_cars() -> void:
             -190.0 + float(i) * 75.0
         )
         car.set_meta("direction", 1.0 if i % 2 == 0 else -1.0)
+        car.set_meta("hit_cooldown", 0.0)
         add_child(car)
 
         var body_color: Color = car_colors[i % car_colors.size()]
@@ -211,6 +212,9 @@ func create_npcs() -> void:
         npc.set_meta("start_x", positions[i].x)
         npc.set_meta("min_x", positions[i].x - 4.0)
         npc.set_meta("max_x", positions[i].x + 4.0)
+        npc.set_meta("knocked_timer", 0.0)
+        npc.set_meta("hit_cooldown", 0.0)
+        npc.set_meta("stand_rotation", npc.rotation.z)
         add_child(npc)
 
         _add_capsule(
@@ -336,19 +340,59 @@ func handle_interaction() -> void:
 
 func _process(delta: float) -> void:
     for car in cars:
+        if not is_instance_valid(car):
+            continue
         var direction: float = float(car.get_meta("direction", 1.0))
-        car.position.z += direction * 7.0 * delta
+        var cooldown: float = maxf(0.0, float(car.get_meta("hit_cooldown", 0.0)) - delta)
+        car.set_meta("hit_cooldown", cooldown)
+        var knocked_timer: float = maxf(0.0, float(car.get_meta("knocked_timer", 0.0)) - delta)
+        car.set_meta("knocked_timer", knocked_timer)
+
+        if knocked_timer <= 0.0:
+            car.position.z += direction * 7.0 * delta
+            car.rotation.z = lerpf(car.rotation.z, 0.0, minf(1.0, delta * 3.0))
 
         if car.position.z > 245.0:
             car.position.z = -245.0
         elif car.position.z < -245.0:
             car.position.z = 245.0
 
+        if is_instance_valid(player) and cooldown <= 0.0:
+            var player_distance: float = Vector2(
+                car.global_position.x - player.global_position.x,
+                car.global_position.z - player.global_position.z
+            ).length()
+            if player_distance < 2.15:
+                var away: Vector3 = car.global_position - player.global_position
+                away.y = 0.0
+                if away.length_squared() < 0.01:
+                    away = Vector3(1.0, 0.0, 0.0)
+                away = away.normalized()
+                car.set_meta("direction", -direction)
+                car.set_meta("hit_cooldown", 1.0)
+                car.set_meta("knocked_timer", 0.45)
+                car.rotation.z = 0.12 if away.x >= 0.0 else -0.12
+                car.position += away * 1.8
+                if player is CharacterBody3D:
+                    var player_body: CharacterBody3D = player as CharacterBody3D
+                    player_body.velocity.x -= away.x * 3.0
+                    player_body.velocity.z -= away.z * 3.0
+                    player_body.move_and_slide()
+
     for npc in npcs:
+        if not is_instance_valid(npc):
+            continue
+        var cooldown: float = maxf(0.0, float(npc.get_meta("hit_cooldown", 0.0)) - delta)
+        npc.set_meta("hit_cooldown", cooldown)
+        var knocked_timer: float = maxf(0.0, float(npc.get_meta("knocked_timer", 0.0)) - delta)
+        npc.set_meta("knocked_timer", knocked_timer)
+
+        if knocked_timer > 0.0:
+            continue
+
         var direction: float = float(npc.get_meta("direction", 1.0))
         var min_x: float = float(npc.get_meta("min_x", npc.position.x - 4.0))
         var max_x: float = float(npc.get_meta("max_x", npc.position.x + 4.0))
-
         npc.position.x += direction * 1.0 * delta
 
         if npc.position.x >= max_x:
@@ -357,6 +401,27 @@ func _process(delta: float) -> void:
         elif npc.position.x <= min_x:
             npc.position.x = min_x
             npc.set_meta("direction", 1.0)
+
+        if is_instance_valid(player) and cooldown <= 0.0:
+            var hit_distance: float = Vector2(
+                npc.global_position.x - player.global_position.x,
+                npc.global_position.z - player.global_position.z
+            ).length()
+            if hit_distance < 1.35:
+                var push: Vector3 = npc.global_position - player.global_position
+                push.y = 0.0
+                if push.length_squared() < 0.01:
+                    push = Vector3(1.0, 0.0, 0.0)
+                push = push.normalized()
+                npc.set_meta("hit_cooldown", 1.6)
+                npc.set_meta("knocked_timer", 1.25)
+                npc.set_meta("direction", -direction)
+                npc.position += push * 2.4
+                npc.rotation.z = 1.15 if push.x >= 0.0 else -1.15
+                npc.rotation.y += 0.35
+
+        if float(npc.get_meta("knocked_timer", 0.0)) <= 0.0:
+            npc.rotation.z = lerpf(npc.rotation.z, 0.0, minf(1.0, delta * 2.5))
 
 
 func update_mission_markers() -> void:
