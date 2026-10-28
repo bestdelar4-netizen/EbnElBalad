@@ -16,7 +16,6 @@ var map_button: Button
 func _ready() -> void:
     name = "WorldExtras"
     create_trees()
-    create_minimap()
 
 
 func set_player(target: Node3D) -> void:
