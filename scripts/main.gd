@@ -31,6 +31,7 @@ func _ready() -> void:
 	create_world_life()
 	create_starter_neighborhood()
 	create_realistic_city_upgrade()
+	create_game_hud()
 
 
 func create_emergency_visible_world() -> void:
@@ -1159,6 +1160,67 @@ func create_realistic_city_upgrade() -> void:
 	add_child(city_upgrade)
 	city_upgrade.call("initialize", player_reference)
 
+
+
+var game_minutes: float = 1002.0
+var game_clock_label: Label
+var hud_clock_accumulator: float = 0.0
+
+
+func create_game_hud() -> void:
+	var canvas := CanvasLayer.new()
+	canvas.name = "GameHUD"
+	canvas.layer = 4
+	add_child(canvas)
+
+	var panel := PanelContainer.new()
+	panel.name = "StatusPanel"
+	panel.anchor_left = 1.0
+	panel.anchor_right = 1.0
+	panel.offset_left = -390.0
+	panel.offset_top = 18.0
+	panel.offset_right = -18.0
+	panel.offset_bottom = 78.0
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.025, 0.035, 0.045, 0.88)
+	style.border_color = Color("#c7a34b")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(14)
+	panel.add_theme_stylebox_override("panel", style)
+	canvas.add_child(panel)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	panel.add_child(row)
+
+	var cash := Label.new()
+	cash.text = "12,350 جنيه"
+	cash.add_theme_font_size_override("font_size", 20)
+	cash.add_theme_color_override("font_color", Color("#f4e5b8"))
+	row.add_child(cash)
+
+	var wanted := Label.new()
+	wanted.text = "★ ☆ ☆ ☆ ☆"
+	wanted.add_theme_font_size_override("font_size", 22)
+	wanted.add_theme_color_override("font_color", Color("#ffc52e"))
+	row.add_child(wanted)
+
+	game_clock_label = Label.new()
+	game_clock_label.text = "16:42"
+	game_clock_label.add_theme_font_size_override("font_size", 22)
+	game_clock_label.add_theme_color_override("font_color", Color("#ffffff"))
+	row.add_child(game_clock_label)
+
+
+func _process(delta: float) -> void:
+	hud_clock_accumulator += delta
+	if hud_clock_accumulator >= 1.0:
+		game_minutes = fmod(game_minutes + hud_clock_accumulator * 2.0, 1440.0)
+		hud_clock_accumulator = 0.0
+		if is_instance_valid(game_clock_label):
+			var hour: int = int(game_minutes / 60.0)
+			var minute: int = int(game_minutes) % 60
+			game_clock_label.text = "%02d:%02d" % [hour, minute]
 
 # --------------------------------------------------
 # اللاعب
