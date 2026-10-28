@@ -41,6 +41,9 @@ func _ready() -> void:
 
 
 func set_player(target: Node3D) -> void:
+    if not is_instance_valid(target):
+        push_warning("لم يتم تعيين اللاعب لنظام الحياة لأن مرجع اللاعب غير صالح.")
+        return
     player = target
     if is_instance_valid(player):
         var config := ConfigFile.new()
