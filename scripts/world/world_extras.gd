@@ -176,7 +176,11 @@ func toggle_map() -> void:
 
 
 func _process(_delta: float) -> void:
+    # الخريطة القديمة قد لا تُنشأ لأن المشروع يستخدم الخريطة الدائرية الجديدة.
+    # لا نحاول تحديث الكاميرا أو النص إذا لم تكن عناصر الخريطة القديمة موجودة.
     if not is_instance_valid(player):
+        return
+    if not is_instance_valid(map_camera) or not is_instance_valid(area_label):
         return
 
     map_camera.global_position = Vector3(
