@@ -2,6 +2,7 @@ extends Node3D
 
 # إضافات حي مصري أكثر تفصيلاً مع نماذج خفيفة مناسبة للموبايل.
 var player: Node3D
+var vehicle_hit_cooldowns: Dictionary = {}
 
 
 func initialize(player_node: Node3D) -> void:
@@ -13,12 +14,38 @@ func initialize(player_node: Node3D) -> void:
 
 
 func _process(delta: float) -> void:
-	# حركة مرورية خفيفة على الشارع؛ تعود المركبات للبداية عند نهاية المسار.
+	# حركة مرورية خفيفة مع رد فعل عند اصطدام اللاعب بالمركبات.
 	for item in get_children():
-		if item is Node3D and item.has_meta("traffic_speed"):
-			item.position.z += float(item.get_meta("traffic_speed")) * delta
-			if item.position.z > 100.0:
-				item.position.z = 22.0
+		if not (item is Node3D):
+			continue
+		var vehicle: Node3D = item as Node3D
+		if not vehicle.has_meta("traffic_speed"):
+			continue
+		var cooldown: float = maxf(0.0, float(vehicle_hit_cooldowns.get(vehicle.get_instance_id(), 0.0)) - delta)
+		vehicle_hit_cooldowns[vehicle.get_instance_id()] = cooldown
+		var speed: float = float(vehicle.get_meta("traffic_speed"))
+		vehicle.position.z += speed * delta
+		if vehicle.position.z > 100.0:
+			vehicle.position.z = 22.0
+		if is_instance_valid(player) and cooldown <= 0.0:
+			var distance: float = Vector2(
+				vehicle.global_position.x - player.global_position.x,
+				vehicle.global_position.z - player.global_position.z
+			).length()
+			if distance < 2.0:
+				var away: Vector3 = vehicle.global_position - player.global_position
+				away.y = 0.0
+				if away.length_squared() < 0.01:
+					away = Vector3(1.0, 0.0, 0.0)
+				away = away.normalized()
+				vehicle.position += away * 1.8
+				vehicle.set_meta("traffic_speed", -speed)
+				vehicle.rotation.z = 0.1 if away.x >= 0.0 else -0.1
+				vehicle_hit_cooldowns[vehicle.get_instance_id()] = 1.0
+				if player is CharacterBody3D:
+					var player_body: CharacterBody3D = player as CharacterBody3D
+					player_body.velocity.x -= away.x * 3.0
+					player_body.velocity.z -= away.z * 3.0
 
 
 func material(color: Color, roughness_value: float = 0.88) -> StandardMaterial3D:
