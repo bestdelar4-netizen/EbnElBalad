@@ -75,7 +75,7 @@ func create_shop_street() -> void:
 		for index in range(8):
 			var z := 34.0 + float(index) * 10.5
 			var x := side * 25.5
-			var height := 10.0 + float((index * 3) % 5) * 1.7
+			var height: float = 10.0 + float((index * 3) % 5) * 1.7
 			var building := Node3D.new()
 			building.name = "EgyptianShopBuilding_%d_%d" % [int(side), index]
 			building.position = Vector3(x, 0.0, z)
