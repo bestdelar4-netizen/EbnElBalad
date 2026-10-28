@@ -14,6 +14,8 @@ func initialize(player_node: Node3D) -> void:
 
 
 func _process(delta: float) -> void:
+	if not is_instance_valid(player):
+		return
 	# حركة مرورية خفيفة مع رد فعل عند اصطدام اللاعب بالمركبات.
 	for item in get_children():
 		if not (item is Node3D):
