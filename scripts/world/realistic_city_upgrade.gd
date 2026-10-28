@@ -125,7 +125,7 @@ func create_shop_street() -> void:
 	for side in [-1.0, 1.0]:
 		for index in range(5):
 			var z := 42.0 + float(index) * 16.0
-			var x := side * 41.0
+			var x: float = float(side) * 41.0
 			var height := 13.0 + float(index % 3) * 3.0
 			box(self, "BackgroundApartment", Vector3(x, height * 0.5, z), Vector3(10.0, height, 11.0), plaster_colors[(index + 2) % plaster_colors.size()])
 			for floor_index in range(1, int(height / 3.0)):
