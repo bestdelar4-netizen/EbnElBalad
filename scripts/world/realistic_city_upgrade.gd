@@ -73,10 +73,10 @@ func create_shop_street() -> void:
 	# صف محلات وعمارات على جانبي شارع البداية.
 	for side in [-1.0, 1.0]:
 		for index in range(8):
-			var z := 34.0 + float(index) * 10.5
-			var x := side * 25.5
+			var z: float = 34.0 + float(index) * 10.5
+			var x: float = float(side) * 25.5
 			var height: float = 10.0 + float((index * 3) % 5) * 1.7
-			var building := Node3D.new()
+			var building: Node3D = Node3D.new()
 			building.name = "EgyptianShopBuilding_%d_%d" % [int(side), index]
 			building.position = Vector3(x, 0.0, z)
 			add_child(building)
@@ -96,7 +96,7 @@ func create_shop_street() -> void:
 
 			# شبابيك الأدوار العليا وبلكونات بسيطة ودرابزين.
 			for floor_index in range(1, int(height / 3.0)):
-				var floor_y := 2.8 + float(floor_index) * 2.65
+				var floor_y: float = 2.8 + float(floor_index) * 2.65
 				for window_z in [-2.35, 0.0, 2.35]:
 					box(building, "ApartmentWindow", Vector3(front_x, floor_y, window_z), Vector3(0.12, 1.05, 1.12), Color("#456575"))
 					box(building, "WindowFrame", Vector3(front_x - side * 0.08, floor_y, window_z), Vector3(0.10, 1.16, 1.22), Color("#ded2ba"))
@@ -124,9 +124,9 @@ func create_shop_street() -> void:
 	# مبانٍ سكنية أبعد لإغلاق المنظر وإعطاء عمق للشارع.
 	for side in [-1.0, 1.0]:
 		for index in range(5):
-			var z := 42.0 + float(index) * 16.0
+			var z: float = 42.0 + float(index) * 16.0
 			var x: float = float(side) * 41.0
-			var height := 13.0 + float(index % 3) * 3.0
+			var height: float = 13.0 + float(index % 3) * 3.0
 			box(self, "BackgroundApartment", Vector3(x, height * 0.5, z), Vector3(10.0, height, 11.0), plaster_colors[(index + 2) % plaster_colors.size()])
 			for floor_index in range(1, int(height / 3.0)):
 				for window_index in range(3):
