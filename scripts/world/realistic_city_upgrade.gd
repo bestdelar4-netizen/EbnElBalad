@@ -82,7 +82,7 @@ func create_shop_street() -> void:
 			add_child(building)
 			box(building, "PlasteredBuilding", Vector3(0.0, height * 0.5, 0.0), Vector3(8.6, height, 8.8), plaster_colors[index % plaster_colors.size()])
 
-			var front_x := -side * 4.36
+			var front_x: float = -float(side) * 4.36
 			# محل أرضي بزجاج وباب ولافتة ومظلة قماش.
 			box(building, "ShopGlass", Vector3(front_x, 1.45, 0.0), Vector3(0.10, 2.15, 5.6), Color("#426a75"))
 			box(building, "ShopDoor", Vector3(front_x - side * 0.07, 1.15, -2.55), Vector3(0.14, 2.3, 1.15), Color("#4a3426"))
